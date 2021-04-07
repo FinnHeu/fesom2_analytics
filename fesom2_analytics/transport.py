@@ -705,7 +705,9 @@ def section_transport(path_data, path_mesh, savepath_regional_data, filename_reg
     time_range, section_start, section_end = process_inputs(year_start,
                                                             year_end,
                                                             section,
-                                                            savepath_regional_data
+                                                            savepath_regional_data,
+                                                            save_transport_output,
+                                                            save_regional_output
                                                            )
 
 

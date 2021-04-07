@@ -25,7 +25,7 @@ import glob
 
 
 
-def process_inputs(year_start, year_end, section, savepath_regional_data, save_transport_output, save_regional_output):
+def process_inputs(year_start, year_end, section, savepath_regional_data, savepath_transport_data, save_transport_output, save_regional_output):
     """
     process_inputs.py
 
@@ -706,6 +706,7 @@ def section_transport(path_data, path_mesh, savepath_regional_data, filename_reg
                                                             year_end,
                                                             section,
                                                             savepath_regional_data,
+                                                            savepath_transport_data,
                                                             save_transport_output,
                                                             save_regional_output
                                                            )

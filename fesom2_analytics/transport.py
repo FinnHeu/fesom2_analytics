@@ -20,6 +20,8 @@ warnings.filterwarnings("ignore")
 
 from dask.diagnostics import ProgressBar
 import glob
+import fesom2_analytics.plotting
+
 
 
 

@@ -173,7 +173,7 @@ def load_data(path_mesh, path_data, years):
 
 
 
-def cut_to_region(section_start, section_end, save_regional_output, extent=2):
+def cut_to_region(section_start, section_end, mesh, save_regional_output, extent=2):
     """
     cut_to_region.py
 
@@ -721,6 +721,7 @@ def section_transport(path_data, path_mesh, savepath_regional_data, filename_reg
     # Cut to specific region to save diskspace
     box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent = cut_to_region(section_start,
                                                                                                  section_end,
+                                                                                                 mesh,
                                                                                                  save_regional_output=save_regional_output,
                                                                                                  extent=.2
                                                                                                 )

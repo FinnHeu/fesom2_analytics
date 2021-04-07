@@ -728,6 +728,7 @@ filename_transport_data,
 save_transport_output,
 plot_figures,
 save_figures,
+elem_array,
 save_regional_output=True,
 year_start=1958,
 year_end=2005,
@@ -829,6 +830,7 @@ section='BSO'
                       lat,
                       extent,
                       elem_no_nan,
+                      elem_array,
                       save_figures=save_figures
                      )
 

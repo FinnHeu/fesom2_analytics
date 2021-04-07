@@ -823,8 +823,8 @@ section='BSO'
     if plot_figures:
         plot_overview(section_start,
                       section_end,
-                      data_u_reg,
-                      data_v_reg,
+                      u_array,
+                      v_array,
                       lon,
                       lat,
                       extent,

@@ -13,8 +13,8 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 def plot_overview(
     section_start,
     section_end,
-    data_u_reg,
-    data_v_reg,
+    u_array,
+    v_array,
     lon,
     lat,
     extent,
@@ -31,8 +31,8 @@ def plot_overview(
     ----------------------------------------
     section_start (tuple, list[1,2])
     section_end (tuple, list[1,2])
-    data_u_reg (xr.datarray)
-    data_v_reg (xr.dataarray)
+    u_array (xr.datarray)
+    v_array (xr.dataarray)
     lon (np.ndarray)
     lat (np.ndarray)
     extent (int, float)

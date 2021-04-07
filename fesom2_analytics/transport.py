@@ -682,7 +682,7 @@ def create_output(
     ds = xr.Dataset(
         {
             "transport_across": xr.DataArray(
-                data=transport_across.values,
+                data=transport_across,
                 dims=["time", "dist", "depth"],
                 coords={
                     "time": transport_across.time.values,
@@ -692,7 +692,7 @@ def create_output(
                 attrs={"_FillValue": np.nan, "units": "m³/s"},
             ),
             "velocity_across": xr.DataArray(
-                data=velocity_across.values,
+                data=velocity_across,
                 dims=["time", "dist", "depth"],
                 coords={
                     "time": velocity_across.time.values,

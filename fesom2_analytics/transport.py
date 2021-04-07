@@ -238,8 +238,11 @@ def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_reg
     if (isfile(reg_file_1)) & (isfile(reg_file_2)):
 
         print("files already exist, loading files from disk")
-        data_u_reg = xr.open_dataset(reg_file_1)
-        data_v_reg = xr.open_dataset(reg_file_2)
+        # Enable a Dask progress bar
+        ProgressBar().register()
+
+        data_u_reg = xr.open_dataset(reg_file_1).load()
+        data_v_reg = xr.open_dataset(reg_file_2).load()
 
     else:
         # load data
@@ -372,7 +375,7 @@ def start_end_is_land(section_start, section_end, polygon_list):
     return start_point_bool, end_point_bool
 
 
-def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat):
+def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg):
     """
     Find_polygon_intersects.py
 
@@ -783,7 +786,9 @@ def section_transport(path_data, path_mesh, savepath_regional_data, filename_reg
                                                                                                                                                     line_section,
                                                                                                                                                     elem_no_nan,
                                                                                                                                                     lon,
-                                                                                                                                                    lat
+                                                                                                                                                    lat,
+                                                                                                                                                    data_u_reg,
+                                                                                                                                                    data_v_reg
                                                                                                                                                    )
 
     # Check if start and end of section are on land

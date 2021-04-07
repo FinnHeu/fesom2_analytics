@@ -69,7 +69,7 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
 
             elif section == "SVAL_FJL":
                 section_start = (24.110024558329297, 79.92502447814552)
-                secttion_end = (46.69791436099627, 80.60826231880695)
+                section_end = (46.69791436099627, 80.60826231880695)
 
             # add further sections
             print(
@@ -265,6 +265,46 @@ def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_reg
     lat = mesh.y2
 
     return box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent
+
+
+
+
+def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end):
+    """
+    Create_polygons_and_line.py
+
+    Uses shapely to create alist of all polygons and a section line in the regional Dataset
+
+    Inputs:
+    --------------------------------
+    elem_no_nan
+    section_start
+    section_end
+
+    Returns:
+    --------------------------------
+    line_section
+    polygon_list"""
+    # Create a shapely line element that represents the section
+    print("\n----> Compute line element for section")
+    line_section = sg.LineString([section_start, section_end])
+
+    # Create a list of all polygons in the region from the coordinates of the nods
+    print("\n----> Compute polygon elements for every grid cell in region")
+    polygon_list = list()
+
+    for ii in tqdm(range(elem_no_nan.shape[0])):
+        polygon_list.append(
+            sg.Polygon(
+                [
+                    (mesh.x2[elem_no_nan][ii, 0], mesh.y2[elem_no_nan][ii, 0]),
+                    (mesh.x2[elem_no_nan][ii, 1], mesh.y2[elem_no_nan][ii, 1]),
+                    (mesh.x2[elem_no_nan][ii, 2], mesh.y2[elem_no_nan][ii, 2]),
+                ]
+            )
+        )
+
+    return line_section, polygon_list
 
 
 

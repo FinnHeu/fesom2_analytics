@@ -20,7 +20,6 @@ warnings.filterwarnings("ignore")
 
 from dask.diagnostics import ProgressBar
 import glob
-import fesom2_analytics.plotting
 
 
 
@@ -724,7 +723,20 @@ def create_output(
 
 
 
-def section_transport(path_data, path_mesh, savepath_regional_data, filename_regional_data, savepath_transport_data, filename_transport_data, save_transport_output, save_regional_output=True, year_start=1958, year_end=2005, section='BSO'):
+def section_transport(path_data,
+path_mesh,
+savepath_regional_data,
+filename_regional_data,
+savepath_transport_data,
+filename_transport_data,
+save_transport_output,
+plot_figures,
+save_figures,
+save_regional_output=True,
+year_start=1958,
+year_end=2005,
+section='BSO'
+):
     """
     section_transport.py
 

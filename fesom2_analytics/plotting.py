@@ -15,6 +15,7 @@ def plot_overview(
     section_end,
     u_array,
     v_array,
+    coords_array,
     lon,
     lat,
     extent,
@@ -95,14 +96,6 @@ def plot_overview(
         transform=ccrs.PlateCarree(),
         color="r",
     )
-
-    # ax.plot(coords_array[:,0],
-    #            coords_array[:,1],
-    #            transform=ccrs.PlateCarree(),
-    #            color='w',
-    #            marker='.',
-    #            markersize=1
-    #        )
 
     ax.plot(
         coords_array[:, 2],

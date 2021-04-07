@@ -825,6 +825,7 @@ section='BSO'
                       section_end,
                       u_array,
                       v_array,
+                      coords_array,
                       lon,
                       lat,
                       extent,

@@ -1,5 +1,14 @@
 """Module to plot transport associated analytics from ocean model pyfesom2.0"""
 
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.ticker as mticker
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+
+
 # Eventually plot the overview figure
 def plot_overview(
     section_start,

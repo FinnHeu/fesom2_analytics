@@ -4,11 +4,6 @@ import pyfesom2 as pf
 import xarray as xr
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import matplotlib.ticker as mticker
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from os.path import join, isdir, isfile
 from os import mkdir
 import shapely.geometry as sg

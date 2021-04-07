@@ -375,7 +375,7 @@ def start_end_is_land(section_start, section_end, polygon_list):
     return start_point_bool, end_point_bool
 
 
-def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg):
+def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh):
     """
     Find_polygon_intersects.py
 
@@ -389,6 +389,9 @@ def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat, d
     elem_no_nan
     lon,
     lat
+    data_u_reg
+    data_v_reg
+    mesh
 
     Returns:
     -------------------------------
@@ -788,7 +791,8 @@ def section_transport(path_data, path_mesh, savepath_regional_data, filename_reg
                                                                                                                                                     lon,
                                                                                                                                                     lat,
                                                                                                                                                     data_u_reg,
-                                                                                                                                                    data_v_reg
+                                                                                                                                                    data_v_reg,
+                                                                                                                                                    mesh
                                                                                                                                                    )
 
     # Check if start and end of section are on land

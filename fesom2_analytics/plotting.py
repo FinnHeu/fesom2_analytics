@@ -19,6 +19,7 @@ def plot_overview(
     lat,
     extent,
     elem_no_nan,
+    elem_array,
     save_figures,
 ):
     """

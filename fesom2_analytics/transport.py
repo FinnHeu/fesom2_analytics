@@ -826,7 +826,7 @@ section='BSO'
 
     # Plot figures
     if plot_figures:
-        fesom2_analytics.plotting.plot_overview(section_start,
+        plot_overview(section_start,
                       section_end,
                       data_u_reg,
                       data_v_reg,

@@ -635,8 +635,8 @@ def compute_transport(section_end, section_start, u_array, v_array, area_array):
     # print('The (time-) mean transport across the section is: ', str(np.nansum(velocity_across * area_array[np.newaxis,:,:], axis=(1,2)) /1e6))
 
     # mask non existing values
-    transport_across = np.where(transport_across == 0.0000, np.nan, transport_across)
-    velocity_across = np.where(velocity_across == 0.0000, np.nan, velocity_across)
+    # transport_across.where(transport_across == 0.0000, np.nan, transport_across)
+    # velocity_across = np.where(velocity_across == 0.0000, np.nan, velocity_across)
     return velocity_across, transport_across, section_normal_vec, section_normal_vec_normed
 
 
@@ -682,7 +682,7 @@ def create_output(
     ds = xr.Dataset(
         {
             "transport_across": xr.DataArray(
-                data=transport_across,
+                data=transport_across.values,
                 dims=["time", "dist", "depth"],
                 coords={
                     "time": transport_across.time.values,
@@ -692,7 +692,7 @@ def create_output(
                 attrs={"_FillValue": np.nan, "units": "m³/s"},
             ),
             "velocity_across": xr.DataArray(
-                data=velocity_across,
+                data=velocity_across.values,
                 dims=["time", "dist", "depth"],
                 coords={
                     "time": velocity_across.time.values,

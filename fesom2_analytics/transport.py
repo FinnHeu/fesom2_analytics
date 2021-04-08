@@ -862,4 +862,4 @@ section='BSO'
                                  save=save_transport_output
                                 )
 
-    return ds_transport
+    return ds_transport, section_normal_vec

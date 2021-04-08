@@ -124,7 +124,7 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
 
 
 
-def load_data(path_mesh, path_data, years):
+def load_data(path_mesh, path_data, time_range):
     """
     load_data.py
 
@@ -134,7 +134,7 @@ def load_data(path_mesh, path_data, years):
     ---------------------------------
     path_mesh (str)
     path_data (str)
-    years (int or list or array)
+    time_range (np.ndarray)
 
     Returns:
     ---------------------------------
@@ -153,7 +153,7 @@ def load_data(path_mesh, path_data, years):
     print(path_data)
 
     # grab files dependent on the years chosen
-    year_str = [str(year) for year in np.arange(year_start, year_end + 1)]
+    year_str = [str(year) for year in time_range]
 
     file_str_u = ['u.fesom.' + year + '.nc' for year in year_str]
     file_str_v = ['v.fesom.' + year + '.nc' for year in year_str]

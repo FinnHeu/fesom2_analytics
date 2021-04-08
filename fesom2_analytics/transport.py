@@ -152,16 +152,22 @@ def load_data(path_mesh, path_data, years):
     print("\n----> Loading velocity files")
     print(path_data)
 
-    # grab files
-    files_u = glob.glob(join(path_data, "u.fesom.*.nc"))
-    files_v = glob.glob(join(path_data, "v.fesom.*.nc"))
+    # grab files dependent on the years chosen
+    year_str = [str(year) for year in np.arange(year_start, year_end + 1)]
 
+    file_str_u = ['u.fesom.' + year + '.nc' for year in year_str]
+    file_str_v = ['v.fesom.' + year + '.nc' for year in year_str]
+
+    file_path_u = [join(path_data, file) for file in file_str_u]
+    file_path_v = [join(path_data, file) for file in file_str_v]
+
+    # Load data into dataset
     data_u = xr.open_mfdataset(
-        files_u, chunks={"time": 120, "elem": 10000}, combine="by_coords"
+        file_path_u, chunks={"time": 120, "elem": 10000}, combine="by_coords"
     )
 
     data_v = xr.open_mfdataset(
-        files_v, chunks={"time": 120, "elem": 10000}, combine="by_coords"
+        file_path_v, chunks={"time": 120, "elem": 10000}, combine="by_coords"
     )
 
     return mesh, data_u, data_v

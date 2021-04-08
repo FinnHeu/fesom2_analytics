@@ -54,7 +54,7 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
 
             if section == "BSO":
                 section_start = (19.0544028822795, 74.44233057788212)
-                section_end = (21.925523912516116, 70.18597139727804)
+                section_end = (20.0, 70.125)
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)
@@ -553,7 +553,7 @@ def sort_by_dist_to_section_start(coords_array, section_start):
 
     # Compute the central distance between each pair of intersection coords to the start of the section
 
-    for i in range(210):
+    for i in range(coords_array.shape[0]):
         d_1.append(
             distance_between_points(
                 p1=(coords_array[i, 0], coords_array[i, 1]), p2=section_start

@@ -22,7 +22,15 @@ from .plotting import *
 
 
 
-def process_inputs(year_start, year_end, section, savepath_regional_data, savepath_transport_data, save_transport_output, save_regional_output):
+def process_inputs(
+    year_start,
+    year_end,
+    section,
+    savepath_regional_data,
+    savepath_transport_data,
+    save_transport_output,
+    save_regional_output,
+):
     """
     process_inputs.py
 
@@ -47,18 +55,18 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
 
     print("\n----> Chosen timerange: " + str(year_start) + " to " + str(year_end))
 
-    # Get presets for start and end of section
+    ############################ Get presets for start and end of section or convert custom values
     preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_FJL"]
     if isinstance(section, str):
         if section in preset_sections:
 
             if section == "BSO":
                 section_start = (19.0544028822795, 74.44233057788212)
-                section_end = (20.0, 70.125)
+                section_end = (20, 70.125)
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)
-                section_end = (67.5, 76.8)
+                section_end = (65, 76)
 
             elif section == "BEAR_SVAL":
                 section_start = (16.682139, 76.737635)
@@ -89,7 +97,9 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
         section_start = (section[0], section[1])
         section_end = (section[2], section[3])
 
-        print("Custom section:" + section_start + section_end + "(°E,°N)")
+        print("\n----> Custom section:" + str(section_start) + str(section_end) + "(°E,°N)")
+
+
 
     ######################################## Check if folder structure exists
 
@@ -99,6 +109,7 @@ def process_inputs(year_start, year_end, section, savepath_regional_data, savepa
         print(join(savepath_regional_data, "figures_transport"))
 
         mkdir(join(savepath_regional_data, "figures_transport"))
+
     else:
         print("\n----> Figure folder exists")
         print(join(savepath_regional_data, "figures_transport"))
@@ -138,9 +149,9 @@ def load_data(path_mesh, path_data, time_range):
 
     Returns:
     ---------------------------------
-    mesh
-    data_u (xr.dataarray)
-    data_v (xr.dataarray)
+    mesh: pyfesom mesh object
+    data_u (xr.dataarray): dataset containing global velocity fields
+    data_v (xr.dataarray): dataset containing global velocity fields
     """
 
     ################################# Load mesh
@@ -155,8 +166,8 @@ def load_data(path_mesh, path_data, time_range):
     # grab files dependent on the years chosen
     year_str = [str(year) for year in time_range]
 
-    file_str_u = ['u.fesom.' + year + '.nc' for year in year_str]
-    file_str_v = ['v.fesom.' + year + '.nc' for year in year_str]
+    file_str_u = ["u.fesom." + year + ".nc" for year in year_str]
+    file_str_v = ["v.fesom." + year + ".nc" for year in year_str]
 
     file_path_u = [join(path_data, file) for file in file_str_u]
     file_path_v = [join(path_data, file) for file in file_str_v]
@@ -176,7 +187,17 @@ def load_data(path_mesh, path_data, time_range):
 
 
 
-def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_regional_data, savepath_regional_data, save_regional_output, extent=2):
+def cut_to_region(
+    section_start,
+    section_end,
+    mesh,
+    data_u,
+    data_v,
+    filename_regional_data,
+    savepath_regional_data,
+    save_regional_output,
+    extent=2.5,
+):
     """
     cut_to_region.py
 
@@ -223,12 +244,12 @@ def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_reg
 
     # compute elements that belong to region
 
+    # cut data to region
+    print("\n----> Crop data to cutout box")
+
     # elem_no_nan: beinhaltet die indizes der dreiecke, die innerhalb der region liegen
     # no_nan_triangles: boolean array der größe von u, v mit True für innerhalb und False für außerhalb der region
     elem_no_nan, no_nan_triangles = pf.cut_region(mesh, box)
-
-    # cut data to region
-    print("\n----> Crop data to cutout box")
 
     # check if files already exist
     output_1 = filename_regional_data[:-3] + "_u.nc"
@@ -236,7 +257,7 @@ def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_reg
 
     reg_file_1 = join(savepath_regional_data, output_1)
     reg_file_2 = join(savepath_regional_data, output_2)
-#     print(reg_file_1, reg_file_2)
+    #     print(reg_file_1, reg_file_2)
 
     if (isfile(reg_file_1)) & (isfile(reg_file_2)):
 
@@ -275,6 +296,7 @@ def cut_to_region(section_start, section_end, mesh, data_u, data_v, filename_reg
 
 
 
+
 def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end):
     """
     Create_polygons_and_line.py
@@ -290,10 +312,36 @@ def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end):
     Returns:
     --------------------------------
     line_section
-    polygon_list"""
+    polygon_list
+    """
+
     # Create a shapely line element that represents the section
     print("\n----> Compute line element for section")
-    line_section = sg.LineString([section_start, section_end])
+
+    if use_great_circle:
+        print('computing waypoints along great circle with WGS84 ellipsoid')
+
+        g = pyproj.Geod(ellps='WGS84')
+
+        lonlat = g.npts(section_start[0],
+                        section_start[1],
+                        section_end[0],
+                        section_end[1],
+                        1000
+                        )
+
+        lonlat = np.array(lonlat)
+
+    else:
+        if section_start[0] == section_end[0]:
+            print('section along longitude')
+
+        elif section_start[1] == section_end[1]:
+            print('section along latitude')
+
+        lonlat = [list(section_start), list(section_end)]
+
+    line_section = sg.LineString(lonlat)
 
     # Create a list of all polygons in the region from the coordinates of the nods
     print("\n----> Compute polygon elements for every grid cell in region")
@@ -310,7 +358,210 @@ def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end):
             )
         )
 
-    return line_section, polygon_list
+    return line_section, polygon_list, lonlat
+
+
+
+
+
+def find_polygon_intersects(
+    polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh, use_great_circle
+):
+    """
+    Find_polygon_intersects.py
+
+
+    Compute poylgons that are intersected by the section
+
+    Inputs:
+    -------------------------------
+    polygon_list
+    line_section
+    elem_no_nan
+    lon,
+    lat
+    data_u_reg
+    data_v_reg
+    mesh
+    use_great_circle
+
+    Returns:
+    -------------------------------
+    ntersect_bool
+    coords_array
+    dist_array
+    depth_array
+    area_array
+    u_array
+    v_array
+    elem_array
+    lon_array
+    lat_array
+    """
+    # Find intersecting polygons (grid cells) and compute the intersection coordinates and the great circle distance between them
+    print(
+        "\n----> Find polygons that intersect with the section and compute the intersection coordinates and distances")
+
+    intersect_bool = list()
+    coords = list()
+    gc_dist = list()
+    intersect_points = list()
+
+    # check for intersections
+    for ii in range(elem_no_nan.shape[0]):
+        coords.append(polygon_list[ii].intersection(line_section).coords)
+
+        # if no intersections (coords == [])
+        if not coords[ii]:
+            # fill boolean array with False (no intersects)
+            intersect_bool.append(False)
+            # fill distance list with nan
+            gc_dist.append(np.nan)
+
+        # if exist intersections (coords != [] )
+        else:
+            # fill boolean array with True (intersects exists)
+            intersect_bool.append(True)
+            # if there are intersects compute the distance between the points
+            gc_dist.append(
+                distance_between_points(
+                    list(coords[ii])[0],
+                    list(coords[ii])[-1],
+                    unit="meters",
+                    haversine=True,
+                )
+            )
+
+    print("Found " + str(np.nansum(intersect_bool)) + " polygons intersected")
+
+    # Convert to numpy array
+    intersect_bool = np.array(intersect_bool, dtype=bool)
+
+    ###################### Create numpy arrays that are filled with ONLY those datapoints of polygons intersected by the section
+
+    # Find grid cells that are intersected
+    h = np.where(intersect_bool)[0]
+
+    # Fill array with intersection coords [lon_1, lat_1, lon_2, lat_2]
+    coords_array = np.ones((len(h), 4)) * np.nan
+    for ii in range(len(h)):
+        coords_array[ii, 0] = list(coords[h[ii]][0])[0]
+        coords_array[ii, 1] = list(coords[h[ii]][0])[1]
+        coords_array[ii, 2] = list(coords[h[ii]][-1])[0]
+        coords_array[ii, 3] = list(coords[h[ii]][-1])[1]
+
+    # Fill array with the distances of the intersections
+    dist_array = np.array(gc_dist)[h]
+
+    # Fill array with the velocities
+    u_array = data_u_reg.isel(elem=h)
+    v_array = data_v_reg.isel(elem=h)
+
+    # Compute and fill depth of grid cell array
+    depth_array = abs(np.diff(mesh.zlev))
+
+    # Compute area of intersected grid cell
+    area_array = dist_array[:, np.newaxis] * depth_array[np.newaxis, :]
+
+    # Select nods
+    elem_array = elem_no_nan[h, :]
+
+    # select lons, lats
+    lon_array = lon[h]
+    lat_array = lat[h]
+
+#     ############################### Compare the total distance to great circle distance from start point to end point
+
+    print(
+        "\n----> Compute the ratio of great circle distance to the sum of all polygon intersection segments"
+    )
+    # Compute the great circle distance between outer intersection coordinates
+    great_circle_dist = distance_between_points(
+        (np.min(coords_array[:, [0, 2]]), np.max(coords_array[:, [1, 3]])),
+        (np.max(coords_array[:, [0, 2]]), np.min(coords_array[:, [1, 3]])),
+        unit="meters",
+        haversine=True,
+    )
+
+    # Compute ratio between sum of segments and full great circle
+    dist_ratio = np.nansum(dist_array) / great_circle_dist
+
+    print("The ratio (sum(segments) / great_circle) is: " + str(dist_ratio))
+
+#     if (dist_ratio >= 1.01) | (dist_ratio <= 0.99):
+#         raise Warning(
+#             "The difference between the full great circle and the sum of segments is > 1%. This might yield inaccurate results!"
+#         )
+#         UI_1 = input(
+#             "The segements are multiplied by the ratio to get the right distances, okay? [True or False]"
+#         )
+
+#         if UI_1:
+#             dist_array = dist_array * dist_ratio
+
+#     else:
+#         print("This is withtin the limits of uncertainty")
+
+    return (
+        intersect_bool,
+        coords_array,
+        dist_array,
+        depth_array,
+        area_array,
+        u_array,
+        v_array,
+        elem_array,
+        lon_array,
+        lat_array)
+
+
+
+
+
+def sort_by_dist_to_section_start(coords_array, section_start):
+
+    """
+    Sort_by_dist_to_section_start.py
+
+    Sorts the transport array by distance to start point of section
+
+    Inputs:
+    ------------------------------------
+    coords_array
+    section_start
+
+    Returns:
+    ------------------------------------
+    h_sort
+    central_dist
+
+    """
+
+    d_1 = list()
+    d_2 = list()
+
+    # Compute the central distance between each pair of intersection coords to the start of the section
+    shape_coord = coords_array.shape
+    for i in range(shape_coord[0]):
+        d_1.append(
+            distance_between_points(
+                p1=(coords_array[i, 0], coords_array[i, 1]), p2=section_start
+            )
+        )
+
+        d_2.append(
+            distance_between_points(
+                p1=(coords_array[i, 2], coords_array[i, 3]), p2=section_start
+            )
+        )
+
+    # Compute the distance from the section start to the central point of the polygon intersection
+    central_dist = np.array(d_1) + (np.array(d_2) - np.array(d_1)) / 2
+
+    # Sort by distance
+    h_sort = np.argsort(central_dist)
+
+    return h_sort, central_dist
 
 
 
@@ -360,9 +611,7 @@ def start_end_is_land(section_start, section_end, polygon_list):
 
     # Check the total number of polygons that contain start/ end (must not be >= 1)
     if np.sum(start_point_bool) == 1:
-        print(
-            "The section start coordinate:", section_start, "(°E, °N) is in the ocean"
-        )
+        print("The section start coordinate:", section_start, "(°E, °N) is in the ocean")
     elif np.sum(start_point_bool) == 0:
         print("The section start coordinate:", section_start, "(°E, °N) is on land")
     else:
@@ -378,206 +627,57 @@ def start_end_is_land(section_start, section_end, polygon_list):
     return start_point_bool, end_point_bool
 
 
-def find_polygon_intersects(polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh):
-    """
-    Find_polygon_intersects.py
 
 
-    Compute poylgons that are intersected by the section
 
-    Inputs:
-    -------------------------------
-    polygon_list
-    line_section
-    elem_no_nan
-    lon,
-    lat
-    data_u_reg
-    data_v_reg
-    mesh
 
-    Returns:
-    -------------------------------
-    ntersect_bool
-    coords_array
-    dist_array
-    depth_array
-    area_array
-    u_array
-    v_array
-    elem_array
-    lon_array
-    lat_array
-    """
-    # Find intersecting polygons (grid cells) and compute the intersection coordinates and the great circle distance between them
-    print(
-        "\n----> Find polygons that intersect with the section and compute the intersection coordinates and distances"
-    )
 
-    intersect_bool = list()
-    coords = list()
-    gc_dist = list()
-    intersect_points = list()
+def normal_vector(coords_array, use_great_circle, section_start, section_end):
 
-    # check for intersections
-    for ii in range(elem_no_nan.shape[0]):
-        coords.append(polygon_list[ii].intersection(line_section).coords)
 
-        # if no intersections (coords == [])
-        if not coords[ii]:
-            # fill boolean array with False (no intersects)
-            intersect_bool.append(False)
-            # fill distance list with nan
-            gc_dist.append(np.nan)
+    if use_great_circle:
 
-        # if exist intersections (coords != [] )
-        else:
-            # fill boolean array with True (intersects exists)
-            intersect_bool.append(True)
-            # if there are intersects compute the distance between the points
-            gc_dist.append(
-                distance_between_points(
-                    list(coords[ii])[0],
-                    list(coords[ii])[1],
-                    unit="meters",
-                    haversine=True,
-                )
-            )
-    print("Found " + str(np.nansum(intersect_bool)) + " polygons intersected")
-
-    # Convert to numpy array
-    intersect_bool = np.array(intersect_bool, dtype=bool)
-
-    ###################### Create numpy arrays that are filled with ONLY those datapoints of polygons intersected by the section
-
-    # Find grid cells that are intersected
-    h = np.where(intersect_bool)[0]
-
-    # Fill array with intersection coords [lon_1, lat_1, lon_2, lat_2]
-    coords_array = np.ones((len(h), 4)) * np.nan
-    for ii in range(len(h)):
-        coords_array[ii, 0] = list(coords[h[ii]][0])[0]
-        coords_array[ii, 1] = list(coords[h[ii]][0])[1]
-        coords_array[ii, 2] = list(coords[h[ii]][1])[0]
-        coords_array[ii, 3] = list(coords[h[ii]][1])[1]
-
-    # Fill array with the distances of the intersections
-    dist_array = np.array(gc_dist)[h]
-
-    # Fill array with the velocities
-    u_array = data_u_reg.isel(elem=h)
-    v_array = data_v_reg.isel(elem=h)
-
-    # Compute and fill depth of grid cell array
-    depth_array = abs(np.diff(mesh.zlev))
-
-    # Compute area of intersected grid cell
-    area_array = dist_array[:, np.newaxis] * depth_array[np.newaxis, :]
-
-    # Select nods
-    elem_array = elem_no_nan[h, :]
-
-    # select lons, lats
-    lon_array = lon[h]
-    lat_array = lat[h]
-
-    ############################### Compare the total distance to great circle distance from start point to end point
-
-    print(
-        "\n----> Compute the ratio of great circle distance to the sum of all polygon intersection segments"
-    )
-    # Compute the great circle distance between outer intersection coordinates
-    great_circle_dist = distance_between_points(
-        (np.min(coords_array[:, [0, 2]]), np.max(coords_array[:, [1, 3]])),
-        (np.max(coords_array[:, [0, 2]]), np.min(coords_array[:, [1, 3]])),
-        unit="meters",
-        haversine=True,
-    )
-
-    # Compute ratio between sum of segments and full great circle
-    dist_ratio = np.nansum(dist_array) / great_circle_dist
-
-    print("The ratio (sum(segments) / great_circle) is: " + str(dist_ratio))
-
-    if (dist_ratio >= 1.01) | (dist_ratio <= 0.99):
-        raise Warning(
-            "The difference between the full great circle and the sum of segments is > 1%. This might yield inaccurate results!"
-        )
-        UI_1 = input(
-            "The segements are multiplied by the ratio to get the right distances, okay? [True or False]"
-        )
-
-        if UI_1:
-            dist_array = dist_array * dist_ratio
+        segment_vec = coords_array[:,:2] - coords_array[:,2:] #compute the segment vector connecting the intersections
+        normal_vec = np.array([segment_vec[:,1], - segment_vec[:,0]]) # compute the normal vector for each segment
+        norm = np.sqrt(normal_vec[0,:]**2 + normal_vec[1,:]**2) # compute the 2-norm of each normal vector
+        normed_normal_vec = normal_vec * norm[np.newaxis,:]**-1 # normalise normal vector
 
     else:
-        print("This is withtin the limits of uncertainty")
+        # along longitude
+        if section_start[0] == section_end[0]:
+            normed_normal_vec = np.array((1, 0)).repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
 
-    return (
-        intersect_bool,
-        coords_array,
-        dist_array,
-        depth_array,
-        area_array,
-        u_array,
-        v_array,
-        elem_array,
-        lon_array,
-        lat_array,
-    )
+        # along latitude
+        elif section_start[1] == section_end[1]:
+            normed_normal_vec = np.array((0, 1)).repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
 
-
+        # other
+        else:
+            normal_vec = np.array([section_end[0] - section_start[0], section_end[1] - section_start[1]])
+            norm = np.sqrt(normal_vec[0,:]**2 + normal_vec[1,:]**2) # compute the 2-norm of each normal vector
+            normed_normal_vec = normal_vec * norm[np.newaxis,:]**-1 # normalise normal vector
+            normed_normal_vec = normed_normal_vec.repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
 
 
-def sort_by_dist_to_section_start(coords_array, section_start):
+    # length test == 1
+    length_test = np.sqrt(normed_normal_vec[0]**2 + normed_normal_vec[1]**2)
+    if any(1 - np.abs(length_test) > 1e-10):
+        raise ValueError('Length of the normalized normal vector != 1 +- 1e-10')
 
-    """
-    Sort_by_dist_to_section_start.py
+    # angle test == 0
+    angle_test = [np.dot(normed_normal_vec[:,i], segment_vec[i]) for i in range(segment_vec.shape[0])]
+    if not any(np.abs(length_test) > 1e-10):
+        raise ValueError('Angle between normalized normal vector and segment vector != 90°')
 
-    Sorts the transport array by distance to start point of section
 
-    Inputs:
-    ------------------------------------
-    coords_array
-    section_start
-
-    Returns:
-    ------------------------------------
-    h_sort
-    central_dist
-
-    """
-
-    d_1 = list()
-    d_2 = list()
-
-    # Compute the central distance between each pair of intersection coords to the start of the section
-
-    for i in range(coords_array.shape[0]):
-        d_1.append(
-            distance_between_points(
-                p1=(coords_array[i, 0], coords_array[i, 1]), p2=section_start
-            )
-        )
-
-        d_2.append(
-            distance_between_points(
-                p1=(coords_array[i, 2], coords_array[i, 3]), p2=section_start
-            )
-        )
-
-    # Compute the distance from the section start to the central point of the polygon intersection
-    central_dist = np.array(d_1) + (np.array(d_2) - np.array(d_1)) / 2
-
-    # Sort by distance
-    h_sort = np.argsort(central_dist)
-
-    return h_sort, central_dist
+    return normed_normal_vec
 
 
 
 
-def compute_transport(section_end, section_start, u_array, v_array, area_array):
+
+
+def compute_transport(u_array, v_array, normed_normal_vec, area_array):
     """
     compute_transport.py
 
@@ -599,51 +699,22 @@ def compute_transport(section_end, section_start, u_array, v_array, area_array):
     section_normal_vec_normed
     """
 
-
     print("\n----> Compute the across section transport")
-
-    # Compute the Normalenvektor of the section
-    section_vector_x = section_end[0] - section_start[0]
-    section_vector_y = section_end[1] - section_start[1]
-
-    # Set y component of Normalenvektor to 1 and compute the x component
-    section_normal_vec = np.array([-(section_vector_y / section_vector_x), 1])
-
-    # Compute norm of section normal vector
-    section_normal_vec_len = np.sqrt(
-        section_normal_vec[0] ** 2 + section_normal_vec[1] ** 2
-    )
-
-    # Shrink section normal vec to length 1
-    section_normal_vec_normed = (1 / section_normal_vec_len) * section_normal_vec
-
-    if (
-        np.abs(
-            1
-            - np.sqrt(
-                section_normal_vec_normed[0] ** 2 + section_normal_vec_normed[1] ** 2
-            )
-        )
-        > 1e-5
-    ):
-        raise Warning("The length of the sections Normalenvektor is != 1")
 
     # Compute the across section velocity: u_across = u_vec * n_vec [time x nods x depth]
     print("Compute across section velocity")
-    velocity_across = (u_array.u * section_normal_vec_normed[0]) + (
-        v_array.v * section_normal_vec_normed[1]
-    )
+    velocity_across = u_array.u * normed_normal_vec[0,:][np.newaxis,:,np.newaxis] + v_array.v * normed_normal_vec[1,:][np.newaxis,:,np.newaxis]
 
     # Compute the across section transport: velocity_across * area
     print("Compute across section transport")
     transport_across = velocity_across * area_array[np.newaxis, :, :]
 
-    # print('The (time-) mean transport across the section is: ', str(np.nansum(velocity_across * area_array[np.newaxis,:,:], axis=(1,2)) /1e6))
+#     weight = np.abs(np.diff(mesh.zlev))[np.newaxis, np.newaxis, :]
 
-    # mask non existing values
-    # transport_across.where(transport_across == 0.0000, np.nan, transport_across)
-    # velocity_across = np.where(velocity_across == 0.0000, np.nan, velocity_across)
-    return velocity_across, transport_across, section_normal_vec, section_normal_vec_normed
+    return velocity_across, transport_across#, section_normal_vec, section_normal_vec_normed
+
+
+
 
 
 def create_output(
@@ -657,6 +728,7 @@ def create_output(
     central_dist,
     h_sort,
     dist_array,
+    area_array,
     save=False,
 ):
     """
@@ -689,20 +761,20 @@ def create_output(
         {
             "transport_across": xr.DataArray(
                 data=transport_across.values,
-                dims=["time", "dist", "depth"],
+                dims=["time", "central_dist", "depth"],
                 coords={
                     "time": transport_across.time.values,
-                    "dist": central_dist,
+                    "central_dist": central_dist,
                     "depth": transport_across.nz1.values,
                 },
                 attrs={"_FillValue": np.nan, "units": "m³/s"},
             ),
             "velocity_across": xr.DataArray(
                 data=velocity_across.values,
-                dims=["time", "dist", "depth"],
+                dims=["time", "central_dist", "depth"],
                 coords={
                     "time": velocity_across.time.values,
-                    "dist": central_dist,
+                    "central_dist": central_dist,
                     "depth": velocity_across.nz1.values,
                 },
                 attrs={"_FillValue": np.nan, "units": "m³/s"},
@@ -710,14 +782,25 @@ def create_output(
             "longitude": xr.DataArray(data=lon),
             "latitude": xr.DataArray(data=lat),
             "elem_array": xr.DataArray(
-                data=elem_array, dims=["dist", "tri"], coords={"tri": np.arange(3)}
+                data=elem_array, dims=["central_dist", "tri"], coords={"tri": np.arange(3)}
             ),
-            "width": xr.DataArray(data=dist_array, dims=["dist"]),
+            "width": xr.DataArray(data=dist_array,
+                                  dims=["central_dist"]
+                                 ),
+            "area_weight": xr.DataArray(data=area_array,
+                                        dims=["central_dist", "depth"]
+                                       )
+#             "lon_section": xr.DataArray(data=lon_array,
+#                                         dims=["central_dist"]
+#                                        ),
+#             "lat_section": xr.DataArray(data=lat_array,
+#                                         dims=["central_dist"]
+#                                        )
         }
     )
 
     # sort by distance to section start
-    ds = ds.isel(dist=h_sort)
+    ds = ds.isel(central_dist=h_sort)
 
     if save:
         filename = join(savepath_transport_data, filename_transport_data)
@@ -726,140 +809,73 @@ def create_output(
         print("Dataset saved at: " + filename)
     return ds
 
+    def across_section_transport(year_start, year_end, section, savepath_regional_data, savepath_transport_data, save_transport_output, save_regional_output):
 
-
-def section_transport(path_data,
-path_mesh,
-savepath_regional_data,
-filename_regional_data,
-savepath_transport_data,
-filename_transport_data,
-save_transport_output,
-plot_figures,
-save_figures,
-save_regional_output=True,
-year_start=1958,
-year_end=2005,
-section='BSO'
-):
-    """
-    section_transport.py
-
-    Computes the transport across a given section (land to land) in ocean model fesom2.0
-
-    Inputs:
-    --------------------------------------
-    path_data
-    path_mesh
-    savepath_regional_data
-    filename_regional_data
-    savepath_transport_data
-    filename_transport_data
-    save_transport_output
-    save_regional_output=True
-    year_start=1958
-    year_end=2005
-    section='BSO'
-
-    Returns:
-    ---------------------------------------
-    ds_transport
-
-    """
-    # Process input data
     time_range, section_start, section_end = process_inputs(year_start,
-                                                            year_end,
-                                                            section,
-                                                            savepath_regional_data,
-                                                            savepath_transport_data,
-                                                            save_transport_output,
-                                                            save_regional_output
-                                                           )
+                                                        year_end,
+                                                        section,
+                                                        savepath_regional_data,
+                                                        savepath_transport_data,
+                                                        save_transport_output,
+                                                        save_regional_output,
+                                                    )
 
+    mesh, data_u, data_v = load_data(path_mesh, path_data, time_range)
 
-    # Load mesh and data
-    mesh, data_u, data_v = load_data(path_mesh,
-                                     path_data,
-                                     time_range
-                                    )
+    box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent = cut_to_region(
+                                                                                            section_start,
+                                                                                            section_end,
+                                                                                            mesh,
+                                                                                            data_u,
+                                                                                            data_v,
+                                                                                            filename_regional_data,
+                                                                                            savepath_regional_data,
+                                                                                            save_regional_output,
+                                                                                            extent=2.5,
+                                                                                        )
 
-    # Cut to specific region to save diskspace
-    box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent = cut_to_region(section_start,
-                                                                                                 section_end,
-                                                                                                 mesh,
-                                                                                                 data_u,
-                                                                                                 data_v,
-                                                                                                 filename_regional_data,
-                                                                                                 savepath_regional_data,
-                                                                                                 save_regional_output=save_regional_output,
-                                                                                                 extent=.2
-                                                                                                )
+    line_section, polygon_list, lonlat = create_polygons_and_line(elem_no_nan,
+                                                                  mesh,
+                                                                  section_start,
+                                                                  section_end
+                                                                 )
 
-    # Create polygons and lines in shapely
-    line_section, polygon_list = create_polygons_and_line(elem_no_nan,
-                                                          mesh,
-                                                          section_start,
-                                                          section_end
-                                                         )
-
-
-    # Find polygon intersects
-    Intersect_bool, coords_array, dist_array, depth_array, area_array, u_array, v_array, elem_array, lon_array, lat_array = find_polygon_intersects(polygon_list,
-                                                                                                                                                    line_section,
-                                                                                                                                                    elem_no_nan,
-                                                                                                                                                    lon,
-                                                                                                                                                    lat,
-                                                                                                                                                    data_u_reg,
-                                                                                                                                                    data_v_reg,
-                                                                                                                                                    mesh
-                                                                                                                                                   )
-
-    # Check if start and end of section are on land
     start_point_bool, end_point_bool = start_end_is_land(section_start,
                                                          section_end,
                                                          polygon_list
                                                         )
 
-    # compute across section velocity and transport
-    velocity_across, transport_across, section_normal_vec, section_normal_vec_normed = compute_transport(section_end,
-                                                                                                         section_start,
-                                                                                                         u_array,
-                                                                                                         v_array,
-                                                                                                         area_array
-                                                                                                        )
+    intersect_bool, coords_array, dist_array, depth_array, area_array, u_array, v_array, elem_array, lon_array, lat_array = find_polygon_intersects(
+    polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh, use_great_circle)
 
-    # Plot figures
-    if plot_figures:
-        plot_overview(section_start,
-                      section_end,
-                      u_array,
-                      v_array,
-                      coords_array,
-                      lon,
-                      lat,
-                      extent,
-                      elem_no_nan,
-                      elem_array,
-                      save_figures=save_figures
-                     )
-
-    # Get indices to sort array by distance to section start
     h_sort, central_dist = sort_by_dist_to_section_start(coords_array,
                                                          section_start
                                                         )
 
-    # Create output file
-    ds_transport = create_output(transport_across,
-                                 velocity_across,
-                                 lon,
-                                 lat,
-                                 elem_array,
-                                 savepath_transport_data,
-                                 filename_transport_data,
-                                 central_dist,
-                                 h_sort,
-                                 dist_array,
-                                 save=save_transport_output
-                                )
+    normed_normal_vec = normal_vector(coords_array,
+                                      use_great_circle,
+                                      section_start,
+                                      section_end
+                                     )
 
-    return ds_transport, section_normal_vec
+    velocity_across, transport_across = compute_transport(u_array,
+                                                          v_array,
+                                                          normed_normal_vec,
+                                                          area_array
+                                                         )
+
+    ds_transport = create_output(
+    transport_across,
+    velocity_across,
+    lon,
+    lat,
+    elem_array,
+    savepath_transport_data,
+    filename_transport_data,
+    central_dist,
+    h_sort,
+    dist_array,
+    area_array,
+    save=False,
+)
+    return ds_transport, mesh

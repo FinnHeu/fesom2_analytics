@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore")
 
 from dask.diagnostics import ProgressBar
 import glob
+import pyproj
 from .plotting import *
 
 

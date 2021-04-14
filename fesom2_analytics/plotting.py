@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.ticker as mticker
+import cmocean.cm as cmo
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 
@@ -115,4 +116,71 @@ def plot_overview(
         print("\n----> Saving figure")
         print(join(path, filename))
 
+    return
+
+
+
+
+
+def time_mean_section(ds_transport, data='velocity', vmin=None, vmax=None, Sv=True):
+    """"""
+
+    # prepare depth, and dist arrays for plotting with pcolor
+    dist_left_arr = ds_transport.central_dist - ds_transport.central_dist[0] + 1/2 * ds_transport.width
+    dist_left = [0]
+    for i in range(len(dist_left_arr.values)):
+        dist_left.append(dist_left_arr.values[i])
+    
+    depth_down=[0]
+    for i in range(len(ds_transport.depth.values)):
+        depth_down.append(ds_transport.depth.values[i])
+
+    if data == 'velocity':
+        data_to_plot = np.where(
+            ds_transport.velocity_across.mean(dim="time").transpose() == 0,
+            np.nan,
+            ds_transport.velocity_across.mean(dim="time").transpose(),
+        )
+
+    elif data == 'transport':
+        data_to_plot = np.where(
+                                ds_transport.transport_across.mean(dim="time").transpose() == 0,
+                                np.nan,
+                                ds_transport.transport_across.mean(dim="time").transpose(),
+                                )
+
+        if Sv:
+            data_to_plot = data_to_plot * 1e-6
+
+
+    # find color limits
+    if (vmin != None) and (vmax != None):
+        clim = (vmin, vmax)
+    else:
+        clim = (-np.nanmax(np.abs(data_to_plot)), np.nanmax(np.abs(data_to_plot)))
+
+#     # find depth limit
+    depth_limit = ds_transport.depth.isel(depth=np.where(np.isnan(data_to_plot) == False)[0].max() + 1).values
+
+    fig, ax = plt.subplots(1, 1, figsize=(25, 10))
+
+    cb = ax.pcolor(
+    np.array(dist_left)/1e3,
+    np.array(depth_down),
+    data_to_plot,
+    cmap="RdBu_r",
+    edgecolor="k",
+    vmin=clim[0],
+    vmax=clim[1],
+    )
+
+    ###### Axis
+    ax.set_ylim((0, depth_limit))
+    ax.invert_yaxis()
+    ax.set_ylabel("depth [m]")
+    ax.set_xlabel("distance [km]")
+
+    plt.colorbar(cb, ax=ax, label="time mean cross section " + data )
+
+    plt.show()
     return

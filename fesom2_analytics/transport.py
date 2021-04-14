@@ -559,6 +559,9 @@ def sort_by_dist_to_section_start(coords_array, section_start):
     # Compute the distance from the section start to the central point of the polygon intersection
     central_dist = np.array(d_1) + (np.array(d_2) - np.array(d_1)) / 2
 
+    # Compute the central longitude and latitude of each cell
+    # central_lon = coords_array[:]
+
     # Sort by distance
     h_sort = np.argsort(central_dist)
 
@@ -730,6 +733,7 @@ def create_output(
     h_sort,
     dist_array,
     area_array,
+    coords_array,
     save=False,
 ):
     """
@@ -783,14 +787,19 @@ def create_output(
             "longitude": xr.DataArray(data=lon),
             "latitude": xr.DataArray(data=lat),
             "elem_array": xr.DataArray(
-                data=elem_array, dims=["central_dist", "tri"], coords={"tri": np.arange(3)}
+                data=elem_array, dims=["central_dist", "tri"], coords={"tri": ["ind1", "ind2", "ind3"]}
             ),
             "width": xr.DataArray(data=dist_array,
                                   dims=["central_dist"]
                                  ),
             "area_weight": xr.DataArray(data=area_array,
                                         dims=["central_dist", "depth"]
-                                       )
+                                       ),
+            "intersection_coords": xr.DataArray(data=coords_array,
+                                                dims=["central_dist", "lonlatlonlat"],
+                                                coords={"lonlatlonlat": ["lon1", "lat1", "lon2", "lat2"]}
+            )
+
 #             "lon_section": xr.DataArray(data=lon_array,
 #                                         dims=["central_dist"]
 #                                        ),
@@ -890,6 +899,7 @@ use_great_circle
     h_sort,
     dist_array,
     area_array,
+    coords_array,
     save=False,
 )
     return ds_transport, mesh

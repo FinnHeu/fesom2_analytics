@@ -63,7 +63,7 @@ def process_inputs(
 
             if section == "BSO":
                 section_start = (20, 79)
-                section_end = (20, 70)
+                section_end = (20, 70.1)
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)

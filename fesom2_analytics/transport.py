@@ -298,7 +298,7 @@ def cut_to_region(
 
 
 
-def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end):
+def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_great_circle):
     """
     Create_polygons_and_line.py
 

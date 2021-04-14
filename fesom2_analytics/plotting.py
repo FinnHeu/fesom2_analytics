@@ -8,6 +8,8 @@ import matplotlib.ticker as mticker
 import cmocean.cm as cmo
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
+import numpy as np
+
 
 
 # Eventually plot the overview figure
@@ -130,7 +132,7 @@ def time_mean_section(ds_transport, data='velocity', vmin=None, vmax=None, Sv=Tr
     dist_left = [0]
     for i in range(len(dist_left_arr.values)):
         dist_left.append(dist_left_arr.values[i])
-    
+
     depth_down=[0]
     for i in range(len(ds_transport.depth.values)):
         depth_down.append(ds_transport.depth.values[i])

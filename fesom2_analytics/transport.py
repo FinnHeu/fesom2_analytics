@@ -789,7 +789,7 @@ def create_output(
                                   dims=["central_dist"]
                                  ),
             "area_weight": xr.DataArray(data=area_array,
-                                        dims=["central_dist", "depth"]
+                                        # dims=["central_dist", "depth"]
                                        )
 #             "lon_section": xr.DataArray(data=lon_array,
 #                                         dims=["central_dist"]

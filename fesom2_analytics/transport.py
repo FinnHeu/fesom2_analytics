@@ -818,9 +818,11 @@ path_data,
 savepath_regional_data,
 savepath_transport_data,
 filename_regional_data,
-filename_transport_data, 
+filename_transport_data,
 save_transport_output,
-save_regional_output):
+save_regional_output,
+use_great_circle
+):
 
     time_range, section_start, section_end = process_inputs(year_start,
                                                         year_end,

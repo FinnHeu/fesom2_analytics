@@ -850,7 +850,8 @@ use_great_circle
     line_section, polygon_list, lonlat = create_polygons_and_line(elem_no_nan,
                                                                   mesh,
                                                                   section_start,
-                                                                  section_end
+                                                                  section_end,
+                                                                  use_great_circle
                                                                  )
 
     start_point_bool, end_point_bool = start_end_is_land(section_start,

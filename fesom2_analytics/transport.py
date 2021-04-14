@@ -62,8 +62,8 @@ def process_inputs(
         if section in preset_sections:
 
             if section == "BSO":
-                section_start = (20, 79)
-                section_end = (20, 69)
+                section_start = (19.999, 79)
+                section_end = (19.999, 69)
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)
@@ -789,7 +789,7 @@ def create_output(
                                   dims=["central_dist"]
                                  ),
             "area_weight": xr.DataArray(data=area_array,
-                                        # dims=["central_dist", "depth"]
+                                        dims=["central_dist", "depth"]
                                        )
 #             "lon_section": xr.DataArray(data=lon_array,
 #                                         dims=["central_dist"]

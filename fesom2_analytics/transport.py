@@ -67,7 +67,7 @@ def process_inputs(
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)
-                section_end = (59.5, 76)
+                section_end = (59.5, 75.5)
 
             # elif section == "BEAR_SVAL":
             #     section_start = (16.682139, 76.737635)

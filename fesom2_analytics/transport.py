@@ -158,7 +158,7 @@ def load_data(path_mesh, path_data, time_range):
     ################################# Load mesh
     print("\n----> Loading mesh file")
 
-    mesh = pf.load_mesh(path_mesh, abg=[50, 15, -90])
+    mesh = pf.load_mesh(path_mesh)#, abg=[50, 15, -90])
 
     ################################# Load velocity data
     print("\n----> Loading velocity files")

@@ -57,7 +57,7 @@ def process_inputs(
     print("\n----> Chosen timerange: " + str(year_start) + " to " + str(year_end))
 
     ############################ Get presets for start and end of section or convert custom values
-    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_FJL"]
+    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH"]
     if isinstance(section, str):
         if section in preset_sections:
 
@@ -67,15 +67,23 @@ def process_inputs(
 
             elif section == "BSX":
                 section_start = (59.5, 80.0)
-                section_end = (65, 76)
+                section_end = (59.5, 76)
 
-            elif section == "BEAR_SVAL":
-                section_start = (16.682139, 76.737635)
-                section_end = (19.0544028822795, 74.44233057788212)
+            # elif section == "BEAR_SVAL":
+            #     section_start = (16.682139, 76.737635)
+            #     section_end = (19.0544028822795, 74.44233057788212)
 
-            elif section == "SVAL_FJL":
-                section_start = (24.110024558329297, 79.92502447814552)
-                section_end = (46.69791436099627, 80.60826231880695)
+            elif section == "SVAL_KVITOYA":
+                section_start = (28, 80.2)
+                section_end = (32.5, 80.2)
+
+            elif section == "KVITOYA_FJL":
+                section_start = (32.5, 80.2)
+                section_end = (47.15, 80.2)
+
+            elif section == "ST_ANNA_THROUGH":
+                section_start = (64.7, 80.9)
+                section_end = (79.75, 80.9)
 
             # add further sections
             print(

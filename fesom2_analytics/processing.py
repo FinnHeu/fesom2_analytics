@@ -1,6 +1,6 @@
 import numpy as np
 import xarray as xr
-import tqdm.notebook as tqdm
+from tqdm.notebook import tqdm
 from dask.diagnostics import ProgressBar
 
 
@@ -34,5 +34,5 @@ def crop_and_save_on_nods(files, mesh, save_name, box='BS'):
         print(save_name[ii])
 
     print('----> Finished cropping and saving files')
-    
+
     return

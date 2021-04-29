@@ -124,7 +124,7 @@ def plot_overview(
 
 
 
-def time_mean_section(ds_transport, data='velocity', vmin=None, vmax=None, Sv=True):
+def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, vmax=None, Sv=True):
     """"""
 
     # prepare depth, and dist arrays for plotting with pcolor
@@ -185,4 +185,8 @@ def time_mean_section(ds_transport, data='velocity', vmin=None, vmax=None, Sv=Tr
     plt.colorbar(cb, ax=ax, label="time mean cross section " + data )
 
     plt.show()
+
+    if savepath:
+        plt.savefig(savepath, dpi=300, bbox_inches='tight', facecolor='w')
+
     return

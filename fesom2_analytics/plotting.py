@@ -124,14 +124,20 @@ def plot_overview(
 
 
 
-def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, vmax=None, Sv=True):
+def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, vmax=None, Sv=True, y_type='dist'):
     """"""
 
     # prepare depth, and dist arrays for plotting with pcolor
-    dist_left_arr = ds_transport.central_dist - ds_transport.central_dist[0] + 1/2 * ds_transport.width
-    dist_left = [0]
-    for i in range(len(dist_left_arr.values)):
-        dist_left.append(dist_left_arr.values[i])
+    if y_type == 'dist':
+        dist_left_arr = ds_transport.central_dist - ds_transport.central_dist[0] + 1/2 * ds_transport.width
+        dist_left = [0]
+        for i in range(len(dist_left_arr.values)):
+            dist_left.append(dist_left_arr.values[i] / 1e3)
+
+
+    elif y_type == 'lon':
+        dist_left = [i for i in ds_transport_BSO.intersection_coords[:,1].values]
+        dist_left.append(ds_transport_BSO.intersection_coords[:,1].values[-1])
 
     depth_down=[0]
     for i in range(len(ds_transport.depth.values)):
@@ -167,7 +173,7 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
     fig, ax = plt.subplots(1, 1, figsize=(25, 10))
 
     cb = ax.pcolor(
-    np.array(dist_left)/1e3,
+    np.array(dist_left),
     np.array(depth_down),
     data_to_plot,
     cmap="RdBu_r",
@@ -179,8 +185,14 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
     ###### Axis
     ax.set_ylim((0, depth_limit))
     ax.invert_yaxis()
+
+    if y_type == 'dist':
+        ax.set_xlabel("distance [km]")
+    elif y_type == 'lon':
+        ax.set_ylabel("depth [m]")
+        ax.invert_xaxis()
+
     ax.set_ylabel("depth [m]")
-    ax.set_xlabel("distance [km]")
 
     plt.colorbar(cb, ax=ax, label="time mean cross section " + data )
 

@@ -136,8 +136,8 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
 
 
     elif y_type == 'lon':
-        dist_left = [i for i in ds_transport_BSO.intersection_coords[:,1].values]
-        dist_left.append(ds_transport_BSO.intersection_coords[:,1].values[-1])
+        dist_left = [i for i in ds_transport.intersection_coords[:,1].values]
+        dist_left.append(ds_transport.intersection_coords[:,1].values[-1])
 
     depth_down=[0]
     for i in range(len(ds_transport.depth.values)):

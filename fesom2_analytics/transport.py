@@ -843,7 +843,7 @@ def create_output(
                                                 coords={"lonlatlonlat": ["lon1", "lat1", "lon2", "lat2"]}
             ),
 
-            "normed_normal_vec": xr.DataArray(data=normed_normal_vec
+            "normed_normal_vec": xr.DataArray(data=normed_normal_vec,
                                         dims=["central_dist"]
                                        )
 #             "lat_section": xr.DataArray(data=lat_array,

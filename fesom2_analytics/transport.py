@@ -864,7 +864,7 @@ save_regional_output,
 use_great_circle
 ):
 
-    time_range, section_start, section_end = process_inputs(year_start,
+    time_range, section_start, section_end, across_0E = process_inputs(year_start,
                                                         year_end,
                                                         section,
                                                         savepath_regional_data,
@@ -873,7 +873,7 @@ use_great_circle
                                                         save_regional_output,
                                                     )
 
-    mesh, data_u, data_v = load_data(path_mesh, path_data, time_range)
+    mesh, data_u, data_v = load_data(path_mesh, path_data, time_range, across_0E)
 
     box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent = cut_to_region(
                                                                                             section_start,

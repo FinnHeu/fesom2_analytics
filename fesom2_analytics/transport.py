@@ -151,7 +151,7 @@ def process_inputs(
 
             mkdir(savepath_regional_data)
 
-    return time_range, section_start, section_end
+    return time_range, section_start, section_end, across_0E
 
 
 

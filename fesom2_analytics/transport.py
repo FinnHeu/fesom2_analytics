@@ -769,6 +769,7 @@ def create_output(
     area_array,
     coords_array,
     across_0E,
+    normed_normal_vec,
     save=False,
 ):
     """
@@ -797,6 +798,7 @@ def create_output(
     """
     # Rotate longitude back
     if across_0E:
+        print('Rotating longitudes back')
         lon = lon - 90
 
         coords_array[:,0] = coords_array[:,0] - 90
@@ -839,11 +841,11 @@ def create_output(
             "intersection_coords": xr.DataArray(data=coords_array,
                                                 dims=["central_dist", "lonlatlonlat"],
                                                 coords={"lonlatlonlat": ["lon1", "lat1", "lon2", "lat2"]}
-            )
+            ),
 
-#             "lon_section": xr.DataArray(data=lon_array,
-#                                         dims=["central_dist"]
-#                                        ),
+            "normed_normal_vec": xr.DataArray(data=normed_normal_vec
+                                        dims=["central_dist"]
+                                       )
 #             "lat_section": xr.DataArray(data=lat_array,
 #                                         dims=["central_dist"]
 #                                        )
@@ -942,6 +944,7 @@ use_great_circle
     area_array,
     coords_array,
     across_0E,
+    normed_normal_vec,
     save=save_transport_output,
 )
     return ds_transport, mesh

@@ -931,6 +931,7 @@ use_great_circle
     dist_array,
     area_array,
     coords_array,
+    across_0E,
     save=save_transport_output,
 )
     return ds_transport, mesh

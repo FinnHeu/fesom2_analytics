@@ -85,6 +85,7 @@ def process_inputs(
                 section_start = (64.7, 80.9)
                 section_end = (79.75, 80.9)
 
+
             # add further sections
             print(
                 "\n----> Preset section chosen:",
@@ -107,6 +108,17 @@ def process_inputs(
         section_end = (section[2], section[3])
 
         print("\n----> Custom section:" + str(section_start) + str(section_end) + "(°E,°N)")
+
+
+    # Check if 0°E is crossed
+    if (section_start[0] > 0) & (section_end[0]) < 0 | (section_start[0] < 0) & (section_end[0]) > 0:
+        across_0E = True
+
+        print('Section crosses 0°E: Rotating Grid by 90° westward')
+        section_start[0] = section_start[0] + 90
+        section_end[0] = section_end[0] + 90
+
+    else: across_0E = False
 
 
 
@@ -144,7 +156,7 @@ def process_inputs(
 
 
 
-def load_data(path_mesh, path_data, time_range):
+def load_data(path_mesh, path_data, time_range, across_0E):
     """
     load_data.py
 
@@ -167,6 +179,10 @@ def load_data(path_mesh, path_data, time_range):
     print("\n----> Loading mesh file")
 
     mesh = pf.load_mesh(path_mesh)#, abg=[50, 15, -90])
+
+    # Rotate grid 90° westward when section crosses 0°E
+    if across_0E:
+        mesh.x2 = mesh.x2 + 90
 
     ################################# Load velocity data
     print("\n----> Loading velocity files")
@@ -742,6 +758,7 @@ def create_output(
     dist_array,
     area_array,
     coords_array,
+    across_0E,
     save=False,
 ):
     """
@@ -768,6 +785,12 @@ def create_output(
     ds
 
     """
+    # Rotate longitude back
+    if across_0E:
+        lon = lon - 90
+
+        coords_array[:,0] = coords_array[:,0] - 90
+        coords_array[:,2] = coords_array[:,2] - 90
 
     print("\n----> Preparing final dataset")
     ds = xr.Dataset(

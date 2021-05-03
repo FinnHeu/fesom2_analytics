@@ -111,14 +111,17 @@ def process_inputs(
 
 
     # Check if 0°E is crossed
-    if (section_start[0] > 0) & (section_end[0]) < 0 | (section_start[0] < 0) & (section_end[0]) > 0:
+    if np.logical_or((section_start[0] > 0) & (section_end[0] < 0), (section_start[0] < 0) & (section_end[0] > 0)):
         across_0E = True
 
         print('Section crosses 0°E: Rotating Grid by 90° westward')
         section_start[0] = section_start[0] + 90
         section_end[0] = section_end[0] + 90
 
-    else: across_0E = False
+    else:
+        across_0E = False
+
+
 
 
 

@@ -115,8 +115,15 @@ def process_inputs(
         across_0E = True
 
         print('Section crosses 0°E: Rotating Grid by 90° westward')
-        section_start[0] = section_start[0] + 90
-        section_end[0] = section_end[0] + 90
+        temp = [section_start[0], section_start[1]]
+        temp[0] = temp[0] + 90
+        section_start = (temp[0], temp[1])
+
+        temp = [section_end[0], section_end[1]]
+        temp[0] = temp[0] + 90
+        section_end = (temp[0], temp[1])
+
+        print(section_start, section_end, '[rotated °E, °N]')
 
     else:
         across_0E = False

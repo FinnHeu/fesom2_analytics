@@ -330,8 +330,6 @@ def cut_to_region(
 
 
 
-
-
 def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_great_circle):
     """
     Create_polygons_and_line.py
@@ -770,6 +768,8 @@ def create_output(
     coords_array,
     across_0E,
     normed_normal_vec,
+    u_array,
+    v_array,
     save=False,
 ):
     """
@@ -846,7 +846,17 @@ def create_output(
             "normed_normal_vec": xr.DataArray(data=normed_normal_vec,
                                         dims=["xy", "central_dist"],
                                         coords={"xy": ["x", "y"]}
-                                       )
+                                       ),
+
+            "u": xr.DataArray(data=u_array.u.values,
+                                        dims=['time', "central_dist", "depth"],
+                                        ),
+
+            "v": xr.DataArray(data=v_array.v.values,
+                                        dims=['time', "central_dist", "depth"],
+                                        )
+                                        # coords={"xy": ["x", "y"]}
+
 #             "lat_section": xr.DataArray(data=lat_array,
 #                                         dims=["central_dist"]
 #                                        )
@@ -946,6 +956,8 @@ use_great_circle
     coords_array,
     across_0E,
     normed_normal_vec,
+    u_array,
+    v_array,
     save=save_transport_output,
 )
     return ds_transport, mesh

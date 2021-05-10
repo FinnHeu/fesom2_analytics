@@ -21,6 +21,7 @@ from .plotting import *
 
 
 
+########################################################################## Volume Transport Calcuations
 
 
 def process_inputs(
@@ -1022,3 +1023,78 @@ abg=[50,15,-90]
 
 
     return ds_transport, mesh
+
+
+
+
+################################################################## Water Propery Masks
+
+def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(34.5,40), return_temp_and_sal_sections=True):
+    '''
+    water_property_mask.py
+
+    Adds masks forgiven temperature and salinity criteria to the dataset from across_section_transport.py
+
+    Inputs:
+    --------------------------
+    ds_transport: xr.dataset, (exclusively from across_section_transport.py)
+    temp_range: tuple, (Tmin, Tmax)
+    salt_range: tuple, (Smin, Smax)
+    return_temp_and_sal_sections: bool, adds the temperature and salinity section tho the dataset (default=True)
+
+
+    Returns:
+    --------------------------
+    ds: xr.dataset
+    '''
+
+    # Check Inputs 
+    if not isinstance(ds_transport, xr.Dataset):
+        raise('ValueError: ds must be xr.Dataset (output of across_section_transport.py)')
+    if not isinstance(temp_range, tuple):
+        raise('ValueError: temp_range must be tuple (Tmin, Tmax)')
+    if not isinstance(salt_range, tuple):
+        raise('ValueError: salt ange must be tuple (Smin, Smax)')
+    if not isinstance(return_temp_and_sal_sections, bool):
+        raise('ValueError: return_temp_and_sal_sections must be bool')
+
+    # Find start and end year from ds
+    year_start = str(ds_transport.time[0].values)[:4]
+    year_end = str(ds_transport.time[-1].values)[:4]
+
+    # Create file names for temperature and salinity files
+    files_temp = files_salt = list()
+    for ii in np.arange(int(year_start), int(year_end) + 1):
+        # Create file string for loading
+        files_temp.append(data_path + 'temp.fesom.' + str(ii) +'.nc')
+        files_salt.append(data_path + 'salt.fesom.' + str(ii) +'.nc')
+
+    # Load temperature and salinity data
+    print('---> Loading and processing temperature/ salinity fields\n')
+    ds_temp = xr.open_mfdataset(files_temp, combine='by_coords', chunks={'nod2': 1e5})
+    ds_salt = xr.open_mfdataset(files_salt, combine='by_coords', chunks={'nod2': 1e5})
+
+    # Cut to section from ds
+    ds_temp = ds_temp.temp[:,ds_transport.elem_array,:]
+    ds_salt = ds_salt.salt[:,ds_transport.elem_array,:]
+
+    # Average nods of grid cell to one value and execute
+    ds_temp = ds_temp.mean(dim='tri').load()
+    ds_salt = ds_salt.mean(dim='tri').load()
+
+    temp = ds_temp.values
+    salt = ds_salt.values
+
+    # Create masks from the given properties
+    temp_mask = np.where((ds_temp > temp_range[0]) & (ds_temp < temp_range[-1]), True, False)
+    salt_mask = np.where((ds_salt > salt_range[0]) & (ds_salt < salt_range[-1]), True, False)
+
+    mask = np.where((temp_mask == True) & (salt_mask == True), True, False)
+
+    ds_transport['mask'] = (('time','central_dist','depth'), mask)
+    ds_transport['temp_mask'] = (('time','central_dist','depth'), temp_mask)
+    ds_transport['salt_mask'] = (('time','central_dist','depth'), salt_mask)
+    ds_transport['temp'] = (('time','central_dist','depth'), temp)
+    ds_transport['salt'] = (('time','central_dist','depth'), salt)
+
+    return ds

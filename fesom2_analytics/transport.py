@@ -335,7 +335,7 @@ def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_
     """
     Create_polygons_and_line.py
 
-    Uses shapely to create alist of all polygons and a section line in the regional Dataset
+    Uses shapely to create a list of all polygons and a section line in the regional Dataset
 
     Inputs:
     --------------------------------
@@ -1048,7 +1048,7 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
     ds: xr.dataset
     '''
 
-    # Check Inputs 
+    # Check Inputs
     if not isinstance(ds_transport, xr.Dataset):
         raise('ValueError: ds must be xr.Dataset (output of across_section_transport.py)')
     if not isinstance(temp_range, tuple):
@@ -1097,4 +1097,4 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
     ds_transport['temp'] = (('time','central_dist','depth'), temp)
     ds_transport['salt'] = (('time','central_dist','depth'), salt)
 
-    return ds
+    return ds_transport

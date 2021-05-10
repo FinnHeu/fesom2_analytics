@@ -867,46 +867,51 @@ def create_output(
 
 
 def rotate_velocity_vec(ds, abg):
-    lons = ds.longitude[ds.elem_array]
-    lats = ds.latitude[ds.elem_array]
 
-    center_lat = np.mean(lats,axis=1)
-    center_lon = np.mean(lons,axis=1)
+    if abg != [0,0,0]:
+        print('---> Rotating Velocity vectors by: ' + 'alpha: ' + str(abg[0]) + ' beta: ' + str(abg[1]) + ' gamma: ' + str(abg[2]))
+        lons = ds.longitude[ds.elem_array]
+        lats = ds.latitude[ds.elem_array]
 
-    urot, vrot = pf.vec_rotate_r2g(abg[0],
-                                   abg[1],
-                                   abg[2],
-                                   center_lon.values[np.newaxis,:,np.newaxis],
-                                   center_lat.values[np.newaxis,:,np.newaxis],
-                                   ds.u.values,
-                                   ds.v.values,
-                                   flag=1
-                                  )
+        center_lat = np.mean(lats,axis=1)
+        center_lon = np.mean(lons,axis=1)
 
-    urot = np.where(urot==0, np.nan, urot)
-    vrot = np.where(vrot==0, np.nan, vrot)
+        urot, vrot = pf.vec_rotate_r2g(abg[0],
+                                       abg[1],
+                                       abg[2],
+                                       center_lon.values[np.newaxis,:,np.newaxis],
+                                       center_lat.values[np.newaxis,:,np.newaxis],
+                                       ds.u.values,
+                                       ds.v.values,
+                                       flag=1
+                                      )
 
-    # Extract section normal vector
-    nx = ds.normed_normal_vec.values[0,:]
-    ny = ds.normed_normal_vec.values[1,:]
+        urot = np.where(urot==0, np.nan, urot)
+        vrot = np.where(vrot==0, np.nan, vrot)
 
-    # Compute across transport and velocity
-    across_vel = np.zeros_like(urot)
-    for i in range(urot.shape[1]):
-        across_vel[:,i,:] = urot[:,i,:] * nx[i] + vrot[:,i,:] * ny[i]
+        # Extract section normal vector
+        nx = ds.normed_normal_vec.values[0,:]
+        ny = ds.normed_normal_vec.values[1,:]
 
-    # Write to dataset
-    ds['velocity_across'] = ds['velocity_across'] * 0 + across_vel
+        # Compute across transport and velocity
+        across_vel = np.zeros_like(urot)
+        for i in range(urot.shape[1]):
+            across_vel[:,i,:] = urot[:,i,:] * nx[i] + vrot[:,i,:] * ny[i]
+
+        # Write to dataset
+        ds['velocity_across'] = ds['velocity_across'] * 0 + across_vel
 
 
-    transp_across = ds.velocity_across.values * ds.area_weight.values[np.newaxis,:,:]
+        transp_across = ds.velocity_across.values * ds.area_weight.values[np.newaxis,:,:]
 
-    ds['transport_across'] = ds['transport_across'] * 0 + transp_across
+        ds['transport_across'] = ds['transport_across'] * 0 + transp_across
 
     return ds
 
+
+
 def save_as_dataset(ds,
-savepath_transport_data
+savepath_transport_data, filename_transport_data
 ):
 
     if savepath_transport_data:
@@ -1010,7 +1015,10 @@ abg=[50,15,-90]
     )
 
     if savepath_transport_data:
-        save_as_dataset(ds_transport, savepath_transport_data)
+        save_as_dataset(ds_transport,
+        savepath_transport_data,
+        filename_transport_data
+        )
 
 
     return ds_transport, mesh

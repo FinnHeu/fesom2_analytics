@@ -759,8 +759,6 @@ def create_output(
     lon,
     lat,
     elem_array,
-    savepath_transport_data,
-    filename_transport_data,
     central_dist,
     h_sort,
     dist_array,
@@ -770,7 +768,6 @@ def create_output(
     normed_normal_vec,
     u_array,
     v_array,
-    save=False,
 ):
     """
     Create_output.py
@@ -866,25 +863,74 @@ def create_output(
     # sort by distance to section start
     ds = ds.isel(central_dist=h_sort)
 
-    if save:
-        filename = join(savepath_transport_data, filename_transport_data)
-        ds.to_netcdf(path=filename)
-
-        print("Dataset saved at: " + filename)
     return ds
+
+
+def rotate_velocity_vec(ds, abg=abg):
+    lons = ds.longitude[ds.elem_array]
+    lats = ds.latitude[ds.elem_array]
+
+    center_lat = np.mean(lats,axis=1)
+    center_lon = np.mean(lons,axis=1)
+
+    urot, vrot = pf.vec_rotate_r2g(abg[0],
+                                   abg[1],
+                                   abg[2],
+                                   center_lon.values[np.newaxis,:,np.newaxis],
+                                   center_lat.values[np.newaxis,:,np.newaxis],
+                                   ds.u.values,
+                                   ds.v.values,
+                                   flag=1
+                                  )
+
+    urot = np.where(urot==0, np.nan, urot)
+    vrot = np.where(vrot==0, np.nan, vrot)
+
+    # Extract section normal vector
+    nx = ds.normed_normal_vec.values[0,:]
+    ny = ds.normed_normal_vec.values[1,:]
+
+    # Compute across transport and velocity
+    across_vel = np.zeros_like(urot)
+    for i in range(urot.shape[1]):
+        across_vel[:,i,:] = urot[:,i,:] * nx[i] + vrot[:,i,:] * ny[i]
+
+    # Write to dataset
+    ds['velocity_across'] = ds['velocity_across'] * 0 + across_vel
+
+
+    transp_across = ds.velocity_across.values * ds.area_weight.values[np.newaxis,:,:]
+
+    ds['transport_across'] = ds['transport_across'] * 0 + transp_across
+
+    return ds
+
+def save_as_dataset(ds, savepath_transport_data):
+
+        if savepath_transport_data:
+            filename = join(savepath_transport_data, filename_transport_data)
+            ds.to_netcdf(path=savepath_transport_data)
+
+            print("Dataset saved at: " + savepath_transport_data)
+
+    return ds
+
+
+
 
 def across_section_transport(year_start,
 year_end,
 section,
 path_mesh,
 path_data,
-savepath_regional_data,
-savepath_transport_data,
-filename_regional_data,
-filename_transport_data,
-save_transport_output,
-save_regional_output,
-use_great_circle
+savepath_regional_data=None,
+savepath_transport_data=None,
+save_regional_output=False,
+save_transport_output=True,
+filename_regional_data=None,
+filename_transport_data=None,
+use_great_circle=True,
+abg=[50,15,-90]
 ):
 
     time_range, section_start, section_end, across_0E = process_inputs(year_start,
@@ -947,8 +993,6 @@ use_great_circle
     lon,
     lat,
     elem_array,
-    savepath_transport_data,
-    filename_transport_data,
     central_dist,
     h_sort,
     dist_array,
@@ -958,6 +1002,14 @@ use_great_circle
     normed_normal_vec,
     u_array,
     v_array,
-    save=save_transport_output,
-)
+    )
+
+    ds_transport = rotate_velocity_vec(ds_transport,
+    abg=abg
+    )
+
+    if savepath_transport_data:
+        save_as_dataset(ds_transport, savepath_transport_data)
+
+
     return ds_transport, mesh

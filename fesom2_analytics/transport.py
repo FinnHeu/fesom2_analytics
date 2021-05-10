@@ -916,7 +916,7 @@ savepath_transport_data, filename_transport_data
 
     if savepath_transport_data:
         filename = join(savepath_transport_data, filename_transport_data)
-        ds.to_netcdf(path=savepath_transport_data)
+        ds.to_netcdf(path=savepath_transport_data + filename_transport_data)
 
         print("Dataset saved at: " + savepath_transport_data)
     return ds

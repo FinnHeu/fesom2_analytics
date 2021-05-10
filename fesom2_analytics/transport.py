@@ -1086,8 +1086,8 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
     salt = ds_salt.values
 
     # Create masks from the given properties
-    temp_mask = np.where((ds_temp > temp_range[0]) & (ds_temp < temp_range[-1]), True, False)
-    salt_mask = np.where((ds_salt > salt_range[0]) & (ds_salt < salt_range[-1]), True, False)
+    temp_mask = np.where((ds_temp > temp_range[0]) & (ds_temp < temp_range[-1]), True, np.nan)
+    salt_mask = np.where((ds_salt > salt_range[0]) & (ds_salt < salt_range[-1]), True, np.nan)
 
     mask = np.where((temp_mask == True) & (salt_mask == True), True, False)
 

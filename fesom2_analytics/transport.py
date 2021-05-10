@@ -866,7 +866,7 @@ def create_output(
     return ds
 
 
-def rotate_velocity_vec(ds, abg=abg):
+def rotate_velocity_vec(ds, abg):
     lons = ds.longitude[ds.elem_array]
     lats = ds.latitude[ds.elem_array]
 
@@ -909,7 +909,7 @@ def save_as_dataset(ds,
 savepath_transport_data
 ):
 
-    if savepath_transport_data:            
+    if savepath_transport_data:
         filename = join(savepath_transport_data, filename_transport_data)
         ds.to_netcdf(path=savepath_transport_data)
 

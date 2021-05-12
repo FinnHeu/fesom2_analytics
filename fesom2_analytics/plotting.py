@@ -43,17 +43,17 @@ def depth_section(ds_transport, date='mean', variable='velocity_across', savepat
     if time == 'mean':
 
         data_to_plot = np.where(
-            ds_transport.[variable].mean(dim="time").transpose() == 0,
+            ds_transport[variable].mean(dim="time").transpose() == 0,
             np.nan,
-            ds_transport.[variable].mean(dim="time").transpose(),
+            ds_transport[variable].mean(dim="time").transpose(),
         )
 
     else:
 
         data_to_plot = np.where(
-            ds_transport.[variable].sel(time=date).transpose() == 0,
+            ds_transport[variable].sel(time=date).transpose() == 0,
             np.nan,
-            ds_transport.[variable].sel(time=date).transpose(),
+            ds_transport[variable].sel(time=date).transpose(),
         )
 
 
@@ -111,7 +111,7 @@ def plot_background(ax, extent=[17, 23, 69, 75], crs=ccrs.Mollweide(central_long
     plot_background.py
 
     Plots map projection '''
-    
+
     ax.set_extent(extent)
     ax.add_feature(cfeature.LAND, zorder=10)
     ax.add_feature(cfeature.COASTLINE, zorder=10)

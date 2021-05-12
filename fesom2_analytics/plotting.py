@@ -58,7 +58,7 @@ def depth_section(ds_transport, date='mean', variable='velocity_across', savepat
 
 
         # apply Sv to transport
-        if (variable = 'transp_across') & (Sv):
+        if (variable == 'transp_across') & (Sv):
             data_to_plot = data_to_plot * 1e-6
 
     # Plot

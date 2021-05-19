@@ -51,9 +51,9 @@ def depth_section(ds_transport, date='mean', variable='velocity_across', savepat
     else:
 
         data_to_plot = np.where(
-            ds_transport[variable].sel(time=date).transpose() == 0,
+            ds_transport[variable].sel(time=date, method='nearest').transpose() == 0,
             np.nan,
-            ds_transport[variable].sel(time=date).transpose(),
+            ds_transport[variable].sel(time=date, method='nearest').transpose(),
         )
 
 
@@ -96,7 +96,7 @@ def depth_section(ds_transport, date='mean', variable='velocity_across', savepat
 
     ax.set_ylabel("depth [m]")
 
-    plt.colorbar(cb, ax=ax, label="time mean cross section " + data )
+    plt.colorbar(cb, ax=ax, label="time mean cross section " + variable)
 
     plt.show()
 

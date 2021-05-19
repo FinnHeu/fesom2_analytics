@@ -40,7 +40,7 @@ def depth_section(ds_transport, date='mean', variable='velocity_across', savepat
         depth_down.append(ds_transport.depth.values[i])
 
     # prepare data by time keyword
-    if time == 'mean':
+    if date == 'mean':
 
         data_to_plot = np.where(
             ds_transport[variable].mean(dim="time").transpose() == 0,

@@ -94,7 +94,7 @@ def process_inputs(
                 section_start = (8.6, 70.4)
                 section_end = (14.6, 68.4)
 
-            elif section == "ST_ANNA_THROUGH":
+            elif section == "SVINOY":
                 section_start = (0.0, 64.7)
                 section_end = (5.5, 62.1)
 

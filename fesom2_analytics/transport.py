@@ -58,7 +58,7 @@ def process_inputs(
     print("\n----> Chosen timerange: " + str(year_start) + " to " + str(year_end))
 
     ############################ Get presets for start and end of section or convert custom values
-    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH"]
+    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH", "SVINOY", "GIMSOY", "FRAMSTRAIT"]
     if isinstance(section, str):
         if section in preset_sections:
 
@@ -70,9 +70,9 @@ def process_inputs(
                 section_start = (64.1, 80.9)
                 section_end = (64.1, 76)
 
-            # elif section == "BEAR_SVAL":
-            #     section_start = (16.682139, 76.737635)
-            #     section_end = (19.0544028822795, 74.44233057788212)
+            elif section == "BEAR_SVAL":
+                section_start = (16.682139, 76.737635)
+                section_end = (19.0544028822795, 74.44233057788212)
 
             elif section == "SVAL_KVITOYA":
                 section_start = (28, 80.2)
@@ -85,6 +85,18 @@ def process_inputs(
             elif section == "ST_ANNA_THROUGH":
                 section_start = (64.7, 80.9)
                 section_end = (79.75, 80.9)
+
+            elif section == "FRAMSTRAIT":
+                section_start = (-6, 78.8)
+                section_end = (10, 78.8)
+
+            elif section == "GIMSOY":
+                section_start = (8.6, 70.4)
+                section_end = (14.6, 68.4)
+
+            elif section == "ST_ANNA_THROUGH":
+                section_start = (0.0, 64.7)
+                section_end = (5.5, 62.1)
 
 
             # add further sections
@@ -940,6 +952,43 @@ filename_transport_data=None,
 use_great_circle=True,
 abg=[50,15,-90]
 ):
+
+''' across_section_transport.py
+
+Computes the across section velocity and transport for a given section of fesom2 output, where the velocities are given IN the gridcell and NOT on nods.
+The velocity files are croped to regional files covering the whole section to reduce computation time.
+However, long computation times must be expected for high resolution runs (e.g. fArc, Arc01).
+The section is computed along the great circle connecting the start and end point. Shapely polygon elements are created for all gridcells
+in the close vicinity of the section. A shapeply line element represents the sections. The intersection coordinates are computed with shapely.
+The normal vector of the section is computed between each pair of intersection coordinates and multiplied by the velocity vector to obtain the across section velocity.
+
+Inputs
+------
+year_start: int,
+    starting year for computation
+year_end: int,
+    end year for calculation
+section: list or string,
+    either list of form [lon1, lat1, lon2, lat2] representing the start (lon1, lat1) and the end (lon2, lat2) of the section_normal_vec
+    or string ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH", "GIMSOY", "SVINOY", "FRAMSTRAIT"] for presets
+path_mesh: string,
+    path to the mesh files
+path_data: string,
+    path to the data files (u.fesom.1958.nc, v.fesom.1958.nc)
+savepath_regional_data: string,
+    path to store regional croped data (default=None)
+savepath_transport_data: string,
+    path to store transport data (default=None)
+...
+
+Returns
+-------
+
+ds: xarray.dataset,
+    dataset containing all across section velocity and transport parameters
+mesh: fesom.mesh file
+    fesom mesh file
+'''
 
     time_range, section_start, section_end, across_0E = process_inputs(year_start,
                                                         year_end,

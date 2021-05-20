@@ -135,6 +135,15 @@ def process_inputs(
 
     ######################################## Check if folder structure exists
 
+    # Check if transport output folder exists
+    if save_transport_output:
+        if not isdir(savepath_transport_data):
+            print("\n----> Transport output folder does not exist: Creating folder")
+            print(savepath_transport_data)
+
+            mkdir(savepath_transport_data)
+
+
     # Check if figure folder exists
     if not isdir(join(savepath_regional_data, "figures_transport")):
         print("\n----> Figure folder does not exist: Creating folder")
@@ -145,14 +154,6 @@ def process_inputs(
     else:
         print("\n----> Figure folder exists")
         print(join(savepath_regional_data, "figures_transport"))
-
-    # Check if transport output folder exists
-    if save_transport_output:
-        if not isdir(savepath_transport_data):
-            print("\n----> Transport output folder does not exist: Creating folder")
-            print(savepath_transport_data)
-
-            mkdir(savepath_transport_data)
 
     # check if regional data output exists
     if save_regional_output:

@@ -21,6 +21,7 @@ from .plotting import *
 
 
 
+########################################################################## Volume Transport Calcuations
 
 
 def process_inputs(
@@ -57,21 +58,21 @@ def process_inputs(
     print("\n----> Chosen timerange: " + str(year_start) + " to " + str(year_end))
 
     ############################ Get presets for start and end of section or convert custom values
-    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH"]
+    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH", "SVINOY", "GIMSOY", "FRAMSTRAIT"]
     if isinstance(section, str):
         if section in preset_sections:
 
             if section == "BSO":
-                section_start = (19.999, 79)
-                section_end = (19.999, 69)
+                section_start = (19.999, 74.5)
+                section_end = (19.999, 70)
 
             elif section == "BSX":
                 section_start = (64.1, 80.9)
                 section_end = (64.1, 76)
 
-            # elif section == "BEAR_SVAL":
-            #     section_start = (16.682139, 76.737635)
-            #     section_end = (19.0544028822795, 74.44233057788212)
+            elif section == "BEAR_SVAL":
+                section_start = (16.682139, 76.737635)
+                section_end = (19.0544028822795, 74.44233057788212)
 
             elif section == "SVAL_KVITOYA":
                 section_start = (28, 80.2)
@@ -84,6 +85,18 @@ def process_inputs(
             elif section == "ST_ANNA_THROUGH":
                 section_start = (64.7, 80.9)
                 section_end = (79.75, 80.9)
+
+            elif section == "FRAMSTRAIT":
+                section_start = (-6, 78.8)
+                section_end = (10, 78.8)
+
+            elif section == "GIMSOY":
+                section_start = (8.6, 70.4)
+                section_end = (14.6, 68.4)
+
+            elif section == "SVINOY":
+                section_start = (0.0, 64.7)
+                section_end = (5.5, 62.1)
 
 
             # add further sections
@@ -134,6 +147,15 @@ def process_inputs(
 
     ######################################## Check if folder structure exists
 
+    # Check if transport output folder exists
+    if save_transport_output:
+        if not isdir(savepath_transport_data):
+            print("\n----> Transport output folder does not exist: Creating folder")
+            print(savepath_transport_data)
+
+            mkdir(savepath_transport_data)
+
+
     # Check if figure folder exists
     if not isdir(join(savepath_regional_data, "figures_transport")):
         print("\n----> Figure folder does not exist: Creating folder")
@@ -144,14 +166,6 @@ def process_inputs(
     else:
         print("\n----> Figure folder exists")
         print(join(savepath_regional_data, "figures_transport"))
-
-    # Check if transport output folder exists
-    if save_transport_output:
-        if not isdir(savepath_transport_data):
-            print("\n----> Transport output folder does not exist: Creating folder")
-            print(savepath_transport_data)
-
-            mkdir(savepath_transport_data)
 
     # check if regional data output exists
     if save_regional_output:
@@ -334,7 +348,7 @@ def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_
     """
     Create_polygons_and_line.py
 
-    Uses shapely to create alist of all polygons and a section line in the regional Dataset
+    Uses shapely to create a list of all polygons and a section line in the regional Dataset
 
     Inputs:
     --------------------------------
@@ -939,6 +953,43 @@ use_great_circle=True,
 abg=[50,15,-90]
 ):
 
+    ''' across_section_transport.py
+
+    Computes the across section velocity and transport for a given section of fesom2 output, where the velocities are given IN the gridcell and NOT on nods.
+    The velocity files are croped to regional files covering the whole section to reduce computation time.
+    However, long computation times must be expected for high resolution runs (e.g. fArc, Arc01).
+    The section is computed along the great circle connecting the start and end point. Shapely polygon elements are created for all gridcells
+    in the close vicinity of the section. A shapeply line element represents the sections. The intersection coordinates are computed with shapely.
+    The normal vector of the section is computed between each pair of intersection coordinates and multiplied by the velocity vector to obtain the across section velocity.
+
+    Inputs
+    ------
+    year_start: int,
+        starting year for computation
+    year_end: int,
+        end year for calculation
+    section: list or string,
+        either list of form [lon1, lat1, lon2, lat2] representing the start (lon1, lat1) and the end (lon2, lat2) of the section_normal_vec
+        or string ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH", "GIMSOY", "SVINOY", "FRAMSTRAIT"] for presets
+    path_mesh: string,
+        path to the mesh files
+    path_data: string,
+        path to the data files (u.fesom.1958.nc, v.fesom.1958.nc)
+    savepath_regional_data: string,
+        path to store regional croped data (default=None)
+    savepath_transport_data: string,
+        path to store transport data (default=None)
+    ...
+
+    Returns
+    -------
+
+    ds: xarray.dataset,
+        dataset containing all across section velocity and transport parameters
+    mesh: fesom.mesh file
+        fesom mesh file
+    '''
+
     time_range, section_start, section_end, across_0E = process_inputs(year_start,
                                                         year_end,
                                                         section,
@@ -1022,3 +1073,78 @@ abg=[50,15,-90]
 
 
     return ds_transport, mesh
+
+
+
+
+################################################################## Water Propery Masks
+
+def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(34.5,40), return_temp_and_sal_sections=True):
+    '''
+    water_property_mask.py
+
+    Adds masks forgiven temperature and salinity criteria to the dataset from across_section_transport.py
+
+    Inputs:
+    --------------------------
+    ds_transport: xr.dataset, (exclusively from across_section_transport.py)
+    temp_range: tuple, (Tmin, Tmax)
+    salt_range: tuple, (Smin, Smax)
+    return_temp_and_sal_sections: bool, adds the temperature and salinity section tho the dataset (default=True)
+
+
+    Returns:
+    --------------------------
+    ds: xr.dataset
+    '''
+
+    # Check Inputs
+    if not isinstance(ds_transport, xr.Dataset):
+        raise('ValueError: ds must be xr.Dataset (output of across_section_transport.py)')
+    if not isinstance(temp_range, tuple):
+        raise('ValueError: temp_range must be tuple (Tmin, Tmax)')
+    if not isinstance(salt_range, tuple):
+        raise('ValueError: salt ange must be tuple (Smin, Smax)')
+    if not isinstance(return_temp_and_sal_sections, bool):
+        raise('ValueError: return_temp_and_sal_sections must be bool')
+
+    # Find start and end year from ds
+    year_start = str(ds_transport.time[0].values)[:4]
+    year_end = str(ds_transport.time[-1].values)[:4]
+
+    # Create file names for temperature and salinity files
+    files_temp = files_salt = list()
+    for ii in np.arange(int(year_start), int(year_end) + 1):
+        # Create file string for loading
+        files_temp.append(data_path + 'temp.fesom.' + str(ii) +'.nc')
+        files_salt.append(data_path + 'salt.fesom.' + str(ii) +'.nc')
+
+    # Load temperature and salinity data
+    print('---> Loading and processing temperature/ salinity fields\n')
+    ds_temp = xr.open_mfdataset(files_temp, combine='by_coords', chunks={'nod2': 1e5})
+    ds_salt = xr.open_mfdataset(files_salt, combine='by_coords', chunks={'nod2': 1e5})
+
+    # Cut to section from ds
+    ds_temp = ds_temp.temp[:,ds_transport.elem_array,:]
+    ds_salt = ds_salt.salt[:,ds_transport.elem_array,:]
+
+    # Average nods of grid cell to one value and execute
+    ds_temp = ds_temp.mean(dim='tri').load()
+    ds_salt = ds_salt.mean(dim='tri').load()
+
+    temp = ds_temp.values
+    salt = ds_salt.values
+
+    # Create masks from the given properties
+    temp_mask = np.where((ds_temp > temp_range[0]) & (ds_temp < temp_range[-1]), True, np.nan)
+    salt_mask = np.where((ds_salt > salt_range[0]) & (ds_salt < salt_range[-1]), True, np.nan)
+
+    mask = np.where((temp_mask == True) & (salt_mask == True), True, False)
+
+    ds_transport['mask'] = (('time','central_dist','depth'), mask)
+    ds_transport['temp_mask'] = (('time','central_dist','depth'), temp_mask)
+    ds_transport['salt_mask'] = (('time','central_dist','depth'), salt_mask)
+    ds_transport['temp'] = (('time','central_dist','depth'), temp)
+    ds_transport['salt'] = (('time','central_dist','depth'), salt)
+
+    return ds_transport

@@ -7,133 +7,29 @@ import cartopy.feature as cfeature
 import matplotlib.ticker as mticker
 import cmocean.cm as cmo
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-
 import numpy as np
 
 
 
-# Eventually plot the overview figure
-def plot_overview(
-    section_start,
-    section_end,
-    u_array,
-    v_array,
-    coords_array,
-    lon,
-    lat,
-    extent,
-    elem_no_nan,
-    elem_array,
-    save_figures,
-):
+def depth_section(ds_transport, date='mean', variable='velocity_across', savepath=None, vmin=None, vmax=None, Sv=True, y_type='dist'):
     """
-    plot_overview.py
+    depth_section.py
 
-    Plots global map with chosen section and regional map with section and regional total velocity magnitude (np.sqrt(u² + v²))
+    Plots depth section of various parameters for specific time steps or all-time mean
 
     Inputs:
-    ----------------------------------------
-    section_start (tuple, list[1,2])
-    section_end (tuple, list[1,2])
-    u_array (xr.datarray)
-    v_array (xr.dataarray)
-    lon (np.ndarray)
-    lat (np.ndarray)
-    extent (int, float)
-    elem_no_nan (np.ndarray)
-    save_figures (bool)
-
-    Returns:
-    ----------------------------------------
-
-
+    ---------------------------------------
+    ds_transport: xr.DataArray, output from across_section_transport.py or water_property_mask.py
+    date: str, Either date in format: '2000-01-01' for specific time step or 'mean' for all time mean
+    variable: str, ['velocity_across', 'transport_across'] from across_section_transport.py or ['mask', 'temp_mask', 'salt_mask', 'temp', 'salt'] from water_property_mask.py
     """
-    # Plot section
 
-    fig, ax = plt.subplots(
-        1, 1, figsize=(20, 20), subplot_kw=dict(projection=ccrs.PlateCarree())
-    )
-
-    ext = 1
-
-    # ax = ax.flatten()
-    # for axis in ax:
-    ax.add_feature(cfeature.LAND)
-    ax.add_feature(cfeature.COASTLINE)
-
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=2,
-        color="gray",
-        alpha=0.5,
-        linestyle="--",
-    )
-
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
-
-    ax.set_global()
-    ax.set_extent(
-        (
-            section_start[0] - ext,
-            section_end[0] + ext,
-            section_start[1] + ext,
-            section_end[1] - ext,
-        )
-    )
-    # ax.set_extent((21, 22, 70, 71))
-    cb = ax.tripcolor(
-        lon,
-        lat,
-        elem_array,
-        u_array.mean(dim=("time", "nz1")).to_array().values.squeeze(),
-        transform=ccrs.PlateCarree(),
-        cmap="RdBu_r",
-        edgecolors="w",
-    )
-
-    ax.plot(
-        [section_start[0], section_end[0]],
-        [section_start[1], section_end[1]],
-        transform=ccrs.PlateCarree(),
-        color="r",
-    )
-
-    ax.plot(
-        coords_array[:, 2],
-        coords_array[:, 3],
-        "*",
-        transform=ccrs.PlateCarree(),
-        color="w",
-        markersize=2,
-    )
-
-    plt.show()
-
-    if save_figures:
-        path = join(save_regional_output, "figures_transport")
-        filename = "overview_transport" + section + ".png"
-        plt.savefig(join(path, filename), dpi=300, bbox_inches="tight")
-        print("\n----> Saving figure")
-        print(join(path, filename))
-
-    return
-
-
-
-
-
-def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, vmax=None, Sv=True, y_type='dist'):
-    """"""
-
-    # prepare depth, and dist arrays for plotting with pcolor
+    # prepare depth, and lon or dist arrays for plotting with pcolor
     if y_type == 'dist':
         dist_left_arr = ds_transport.central_dist - ds_transport.central_dist[0] + 1/2 * ds_transport.width
         dist_left = [0]
         for i in range(len(dist_left_arr.values)):
             dist_left.append(dist_left_arr.values[i] / 1e3)
-
 
     elif y_type == 'lon':
         dist_left = [i for i in ds_transport.intersection_coords[:,1].values]
@@ -143,23 +39,29 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
     for i in range(len(ds_transport.depth.values)):
         depth_down.append(ds_transport.depth.values[i])
 
-    if data == 'velocity':
+    # prepare data by time keyword
+    if date == 'mean':
+
         data_to_plot = np.where(
-            ds_transport.velocity_across.mean(dim="time").transpose() == 0,
+            ds_transport[variable].mean(dim="time").transpose() == 0,
             np.nan,
-            ds_transport.velocity_across.mean(dim="time").transpose(),
+            ds_transport[variable].mean(dim="time").transpose(),
         )
 
-    elif data == 'transport':
-        data_to_plot = np.where(
-                                ds_transport.transport_across.mean(dim="time").transpose() == 0,
-                                np.nan,
-                                ds_transport.transport_across.mean(dim="time").transpose(),
-                                )
+    else:
 
-        if Sv:
+        data_to_plot = np.where(
+            ds_transport[variable].sel(time=date, method='nearest').transpose() == 0,
+            np.nan,
+            ds_transport[variable].sel(time=date, method='nearest').transpose(),
+        )
+
+
+        # apply Sv to transport
+        if (variable == 'transp_across') & (Sv):
             data_to_plot = data_to_plot * 1e-6
 
+    # Plot
 
     # find color limits
     if (vmin != None) and (vmax != None):
@@ -194,7 +96,7 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
 
     ax.set_ylabel("depth [m]")
 
-    plt.colorbar(cb, ax=ax, label="time mean cross section " + data )
+    plt.colorbar(cb, ax=ax, label="time mean cross section " + variable)
 
     plt.show()
 
@@ -202,3 +104,36 @@ def time_mean_section(ds_transport, savepath=None, data='velocity', vmin=None, v
         plt.savefig(savepath, dpi=300, bbox_inches='tight', facecolor='w')
 
     return
+
+
+def plot_background(ax, extent=[17, 23, 69, 75], crs=ccrs.Mollweide(central_longitude=20)):
+    '''
+    plot_background.py
+
+    Plots map projection '''
+
+    ax.set_extent(extent)
+    ax.add_feature(cfeature.LAND, zorder=10)
+    ax.add_feature(cfeature.COASTLINE, zorder=10)
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(),
+                      draw_labels=True,
+                      linewidth=1,
+                      color="gray",
+                      alpha=0.5,
+                      linestyle="--",
+                      x_inline=False,
+                      y_inline=False
+                     )
+
+    gl.xlocator = mticker.FixedLocator(np.arange(-100,100,1))
+    gl.ylocator = mticker.FixedLocator(np.arange(60,85.5,.5))
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+
+    gl.xlabel_style = {'size': 15}
+    gl.ylabel_style = {'size': 15}
+
+    gl.ylabels_right = False
+
+    return ax

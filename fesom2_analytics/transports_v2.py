@@ -608,6 +608,9 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
         for ii in range(len(section_waypoints)):
             section_waypoints[ii][0] = section_waypoints[ii][0] - lon_rotation
 
+    # Drop unwanted VARIABLES
+    ds = ds.drop(['u_rot', 'v_rot'])
+
     # SORTBY DISTANCE
     ds = ds.sortby('distances_to_start')
 

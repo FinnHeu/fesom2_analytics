@@ -276,11 +276,11 @@ def _ReduceMeshElementNumber(section_waypoints, mesh, section, add_extent):
             lon_temp = np.repeat(element_center_lon[ii], len(section_waypoints_lon))
             lat_temp = np.repeat(element_center_lat[ii], len(section_waypoints_lat))
 
-            distances = haversine_np(lon_temp,
-                                     lat_temp,
-                                     section_waypoints_lon,
-                                     section_waypoints_lat
-                                     )
+            distances = _Haversine(lon_temp,
+                                   lat_temp,
+                                   section_waypoints_lon,
+                                   section_waypoints_lat
+                                   )
 
             if any(distances <= min_dist):
                 distance_bool.append(True)
@@ -399,21 +399,21 @@ def _CreateVerticalGrid(intersection_coords, section, mesh):
     distances_to_start = []
 
     for intersection in intersection_coords:
-        distances_between.append(haversine_np(list(intersection[0])[0],
-                                              list(intersection[0])[-1],
-                                              list(intersection[-1])[0],
-                                              list(intersection[-1])[-1]
-                                              )
+        distances_between.append(_Haversine(list(intersection[0])[0],
+                                            list(intersection[0])[-1],
+                                            list(intersection[-1])[0],
+                                            list(intersection[-1])[-1]
+                                            )
                                  )
 
         # compute the distance of the center of the intersection of each element to the section start
-        distances_to_start.append(haversine_np(section['lon_start'],
-                                               section['lat_start'],
-                                               (list(intersection[0])[0] +
-                                                list(intersection[-1])[0]) / 2,
-                                               (list(intersection[0])[-1] +
-                                                list(intersection[-1])[-1]) / 2,
-                                               )
+        distances_to_start.append(_Haversine(section['lon_start'],
+                                             section['lat_start'],
+                                             (list(intersection[0])[0] +
+                                              list(intersection[-1])[0]) / 2,
+                                             (list(intersection[0])[-1] +
+                                              list(intersection[-1])[-1]) / 2,
+                                             )
                                   )
 
     distances_between = np.array(distances_between) * 1000  # scale to m

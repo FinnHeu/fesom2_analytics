@@ -658,7 +658,7 @@ def cross_section_transports(section, mesh_path, data_path, mesh_diag_path, year
     section_waypoints, mesh, section, lon_rotation, rotation_flag_lon = _ComputeWaypoints(
         section, mesh, use_great_circle)
 
-    elem_box_nods, elem_box_indices = _ReduceElementNumber(
+    elem_box_nods, elem_box_indices = _ReduceMeshElementNumber(
         section_waypoints, mesh, section, add_extent)
 
     elem_box_nods, elem_box_indices, cell_intersections, intersection_coords = _LinePolygonIntersections(

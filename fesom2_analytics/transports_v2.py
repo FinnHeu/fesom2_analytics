@@ -611,7 +611,7 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
     # SORTBY DISTANCE
     ds = ds.sortby('distances_to_start')
 
-    return
+    return ds
 
 
 def cross_section_transports(section, mesh_path, data_path, mesh_diag_path, years, use_great_circle=True, how='mean', add_extent=1, abg=[50, 15, -90]):

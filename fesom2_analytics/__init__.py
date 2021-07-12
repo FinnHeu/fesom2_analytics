@@ -5,4 +5,5 @@
 
 from .plotting import *
 from .transport import *
+from .transports_v2 import *
 from .heat_content import *

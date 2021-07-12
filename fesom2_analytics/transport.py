@@ -11,7 +11,7 @@ from great_circle_calculator.great_circle_calculator import distance_between_poi
 from tqdm.notebook import tqdm
 import warnings
 
-warnings.filterwarnings("ignore")
+# warnings.filterwarnings("ignore")
 
 from dask.diagnostics import ProgressBar
 import glob
@@ -19,9 +19,7 @@ import pyproj
 from .plotting import *
 
 
-
-
-########################################################################## Volume Transport Calcuations
+# Volume Transport Calcuations
 
 
 def process_inputs(
@@ -57,8 +55,9 @@ def process_inputs(
 
     print("\n----> Chosen timerange: " + str(year_start) + " to " + str(year_end))
 
-    ############################ Get presets for start and end of section or convert custom values
-    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA", "KVITOYA_FJL", "ST_ANNA_THROUGH", "SVINOY", "GIMSOY", "FRAMSTRAIT"]
+    # Get presets for start and end of section or convert custom values
+    preset_sections = ["BSO", "BSX", "BEAR_SVAL", "SVAL_KVITOYA",
+                       "KVITOYA_FJL", "ST_ANNA_THROUGH", "SVINOY", "GIMSOY", "FRAMSTRAIT"]
     if isinstance(section, str):
         if section in preset_sections:
 
@@ -98,7 +97,6 @@ def process_inputs(
                 section_start = (0.0, 64.7)
                 section_end = (5.5, 62.1)
 
-
             # add further sections
             print(
                 "\n----> Preset section chosen:",
@@ -122,7 +120,6 @@ def process_inputs(
 
         print("\n----> Custom section:" + str(section_start) + str(section_end) + "(°E,°N)")
 
-
     # Check if 0°E is crossed
     if np.logical_or((section_start[0] > 0) & (section_end[0] < 0), (section_start[0] < 0) & (section_end[0] > 0)):
         across_0E = True
@@ -141,11 +138,7 @@ def process_inputs(
     else:
         across_0E = False
 
-
-
-
-
-    ######################################## Check if folder structure exists
+    # Check if folder structure exists
 
     # Check if transport output folder exists
     if save_transport_output:
@@ -154,7 +147,6 @@ def process_inputs(
             print(savepath_transport_data)
 
             mkdir(savepath_transport_data)
-
 
     # Check if figure folder exists
     if not isdir(join(savepath_regional_data, "figures_transport")):
@@ -178,8 +170,6 @@ def process_inputs(
     return time_range, section_start, section_end, across_0E
 
 
-
-
 def load_data(path_mesh, path_data, time_range, across_0E):
     """
     load_data.py
@@ -199,16 +189,16 @@ def load_data(path_mesh, path_data, time_range, across_0E):
     data_v (xr.dataarray): dataset containing global velocity fields
     """
 
-    ################################# Load mesh
+    # Load mesh
     print("\n----> Loading mesh file")
 
-    mesh = pf.load_mesh(path_mesh)#, abg=[50, 15, -90])
+    mesh = pf.load_mesh(path_mesh)  # , abg=[50, 15, -90])
 
     # Rotate grid 90° westward when section crosses 0°E
     if across_0E:
         mesh.x2 = mesh.x2 + 90
 
-    ################################# Load velocity data
+    # Load velocity data
     print("\n----> Loading velocity files")
     print(path_data)
 
@@ -231,9 +221,6 @@ def load_data(path_mesh, path_data, time_range, across_0E):
     )
 
     return mesh, data_u, data_v
-
-
-
 
 
 def cut_to_region(
@@ -343,7 +330,6 @@ def cut_to_region(
     return box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent
 
 
-
 def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_great_circle):
     """
     Create_polygons_and_line.py
@@ -406,9 +392,6 @@ def create_polygons_and_line(elem_no_nan, mesh, section_start, section_end, use_
         )
 
     return line_section, polygon_list, lonlat
-
-
-
 
 
 def find_polygon_intersects(
@@ -484,7 +467,7 @@ def find_polygon_intersects(
     # Convert to numpy array
     intersect_bool = np.array(intersect_bool, dtype=bool)
 
-    ###################### Create numpy arrays that are filled with ONLY those datapoints of polygons intersected by the section
+    # Create numpy arrays that are filled with ONLY those datapoints of polygons intersected by the section
 
     # Find grid cells that are intersected
     h = np.where(intersect_bool)[0]
@@ -562,11 +545,7 @@ def find_polygon_intersects(
         lat_array)
 
 
-
-
-
 def sort_by_dist_to_section_start(coords_array, section_start):
-
     """
     Sort_by_dist_to_section_start.py
 
@@ -612,9 +591,6 @@ def sort_by_dist_to_section_start(coords_array, section_start):
     h_sort = np.argsort(central_dist)
 
     return h_sort, central_dist
-
-
-
 
 
 def start_end_is_land(section_start, section_end, polygon_list):
@@ -677,37 +653,38 @@ def start_end_is_land(section_start, section_end, polygon_list):
     return start_point_bool, end_point_bool
 
 
-
-
-
-
-
 def normal_vector(coords_array, use_great_circle, section_start, section_end):
-
 
     if use_great_circle:
 
-        segment_vec = coords_array[:,:2] - coords_array[:,2:] #compute the segment vector connecting the intersections
-        normal_vec = np.array([segment_vec[:,1], - segment_vec[:,0]]) # compute the normal vector for each segment
-        norm = np.sqrt(normal_vec[0,:]**2 + normal_vec[1,:]**2) # compute the 2-norm of each normal vector
-        normed_normal_vec = normal_vec * norm[np.newaxis,:]**-1 # normalise normal vector
+        # compute the segment vector connecting the intersections
+        segment_vec = coords_array[:, :2] - coords_array[:, 2:]
+        # compute the normal vector for each segment
+        normal_vec = np.array([segment_vec[:, 1], - segment_vec[:, 0]])
+        # compute the 2-norm of each normal vector
+        norm = np.sqrt(normal_vec[0, :]**2 + normal_vec[1, :]**2)
+        normed_normal_vec = normal_vec * norm[np.newaxis, :]**-1  # normalise normal vector
 
     else:
         # along longitude
         if section_start[0] == section_end[0]:
-            normed_normal_vec = np.array((1, 0)).repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
+            normed_normal_vec = np.array((1, 0)).repeat(
+                coords_array.shape[0]).reshape(2, coords_array.shape[0])
 
         # along latitude
         elif section_start[1] == section_end[1]:
-            normed_normal_vec = np.array((0, 1)).repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
+            normed_normal_vec = np.array((0, 1)).repeat(
+                coords_array.shape[0]).reshape(2, coords_array.shape[0])
 
         # other
         else:
-            normal_vec = np.array([section_end[0] - section_start[0], section_end[1] - section_start[1]])
-            norm = np.sqrt(normal_vec[0,:]**2 + normal_vec[1,:]**2) # compute the 2-norm of each normal vector
-            normed_normal_vec = normal_vec * norm[np.newaxis,:]**-1 # normalise normal vector
-            normed_normal_vec = normed_normal_vec.repeat(coords_array.shape[0]).reshape(2,coords_array.shape[0])
-
+            normal_vec = np.array([section_end[0] - section_start[0],
+                                  section_end[1] - section_start[1]])
+            # compute the 2-norm of each normal vector
+            norm = np.sqrt(normal_vec[0, :]**2 + normal_vec[1, :]**2)
+            normed_normal_vec = normal_vec * norm[np.newaxis, :]**-1  # normalise normal vector
+            normed_normal_vec = normed_normal_vec.repeat(
+                coords_array.shape[0]).reshape(2, coords_array.shape[0])
 
     # length test == 1
     length_test = np.sqrt(normed_normal_vec[0]**2 + normed_normal_vec[1]**2)
@@ -715,16 +692,12 @@ def normal_vector(coords_array, use_great_circle, section_start, section_end):
         raise ValueError('Length of the normalized normal vector != 1 +- 1e-10')
 
     # angle test == 0
-    angle_test = [np.dot(normed_normal_vec[:,i], segment_vec[i]) for i in range(segment_vec.shape[0])]
+    angle_test = [np.dot(normed_normal_vec[:, i], segment_vec[i])
+                  for i in range(segment_vec.shape[0])]
     if not any(np.abs(length_test) > 1e-10):
         raise ValueError('Angle between normalized normal vector and segment vector != 90°')
 
-
     return normed_normal_vec
-
-
-
-
 
 
 def compute_transport(u_array, v_array, normed_normal_vec, area_array):
@@ -753,7 +726,8 @@ def compute_transport(u_array, v_array, normed_normal_vec, area_array):
 
     # Compute the across section velocity: u_across = u_vec * n_vec [time x nods x depth]
     print("Compute across section velocity")
-    velocity_across = u_array.u * normed_normal_vec[0,:][np.newaxis,:,np.newaxis] + v_array.v * normed_normal_vec[1,:][np.newaxis,:,np.newaxis]
+    velocity_across = u_array.u * normed_normal_vec[0, :][np.newaxis, :,
+                                                          np.newaxis] + v_array.v * normed_normal_vec[1, :][np.newaxis, :, np.newaxis]
 
     # Compute the across section transport: velocity_across * area
     print("Compute across section transport")
@@ -761,10 +735,7 @@ def compute_transport(u_array, v_array, normed_normal_vec, area_array):
 
 #     weight = np.abs(np.diff(mesh.zlev))[np.newaxis, np.newaxis, :]
 
-    return velocity_across, transport_across#, section_normal_vec, section_normal_vec_normed
-
-
-
+    return velocity_across, transport_across  # , section_normal_vec, section_normal_vec_normed
 
 
 def create_output(
@@ -812,8 +783,8 @@ def create_output(
         print('Rotating longitudes back')
         lon = lon - 90
 
-        coords_array[:,0] = coords_array[:,0] - 90
-        coords_array[:,2] = coords_array[:,2] - 90
+        coords_array[:, 0] = coords_array[:, 0] - 90
+        coords_array[:, 2] = coords_array[:, 2] - 90
 
     print("\n----> Preparing final dataset")
     ds = xr.Dataset(
@@ -845,32 +816,33 @@ def create_output(
             ),
             "width": xr.DataArray(data=dist_array,
                                   dims=["central_dist"]
-                                 ),
+                                  ),
             "area_weight": xr.DataArray(data=area_array,
                                         dims=["central_dist", "depth"]
-                                       ),
+                                        ),
             "intersection_coords": xr.DataArray(data=coords_array,
                                                 dims=["central_dist", "lonlatlonlat"],
-                                                coords={"lonlatlonlat": ["lon1", "lat1", "lon2", "lat2"]}
-            ),
+                                                coords={"lonlatlonlat": [
+                                                    "lon1", "lat1", "lon2", "lat2"]}
+                                                ),
 
             "normed_normal_vec": xr.DataArray(data=normed_normal_vec,
-                                        dims=["xy", "central_dist"],
-                                        coords={"xy": ["x", "y"]}
-                                       ),
+                                              dims=["xy", "central_dist"],
+                                              coords={"xy": ["x", "y"]}
+                                              ),
 
             "u": xr.DataArray(data=u_array.u.values,
-                                        dims=['time', "central_dist", "depth"],
-                                        ),
+                              dims=['time', "central_dist", "depth"],
+                              ),
 
             "v": xr.DataArray(data=v_array.v.values,
-                                        dims=['time', "central_dist", "depth"],
-                                        )
-                                        # coords={"xy": ["x", "y"]}
+                              dims=['time', "central_dist", "depth"],
+                              )
+            # coords={"xy": ["x", "y"]}
 
-#             "lat_section": xr.DataArray(data=lat_array,
-#                                         dims=["central_dist"]
-#                                        )
+            #             "lat_section": xr.DataArray(data=lat_array,
+            #                                         dims=["central_dist"]
+            #                                        )
         }
     )
 
@@ -882,51 +854,50 @@ def create_output(
 
 def rotate_velocity_vec(ds, abg):
 
-    if abg != [0,0,0]:
-        print('---> Rotating Velocity vectors by: ' + 'alpha: ' + str(abg[0]) + ' beta: ' + str(abg[1]) + ' gamma: ' + str(abg[2]))
+    if abg != [0, 0, 0]:
+        print('---> Rotating Velocity vectors by: ' + 'alpha: ' +
+              str(abg[0]) + ' beta: ' + str(abg[1]) + ' gamma: ' + str(abg[2]))
         lons = ds.longitude[ds.elem_array]
         lats = ds.latitude[ds.elem_array]
 
-        center_lat = np.mean(lats,axis=1)
-        center_lon = np.mean(lons,axis=1)
+        center_lat = np.mean(lats, axis=1)
+        center_lon = np.mean(lons, axis=1)
 
         urot, vrot = pf.vec_rotate_r2g(abg[0],
                                        abg[1],
                                        abg[2],
-                                       center_lon.values[np.newaxis,:,np.newaxis],
-                                       center_lat.values[np.newaxis,:,np.newaxis],
+                                       center_lon.values[np.newaxis, :, np.newaxis],
+                                       center_lat.values[np.newaxis, :, np.newaxis],
                                        ds.u.values,
                                        ds.v.values,
                                        flag=1
-                                      )
+                                       )
 
-        urot = np.where(urot==0, np.nan, urot)
-        vrot = np.where(vrot==0, np.nan, vrot)
+        urot = np.where(urot == 0, np.nan, urot)
+        vrot = np.where(vrot == 0, np.nan, vrot)
 
         # Extract section normal vector
-        nx = ds.normed_normal_vec.values[0,:]
-        ny = ds.normed_normal_vec.values[1,:]
+        nx = ds.normed_normal_vec.values[0, :]
+        ny = ds.normed_normal_vec.values[1, :]
 
         # Compute across transport and velocity
         across_vel = np.zeros_like(urot)
         for i in range(urot.shape[1]):
-            across_vel[:,i,:] = urot[:,i,:] * nx[i] + vrot[:,i,:] * ny[i]
+            across_vel[:, i, :] = urot[:, i, :] * nx[i] + vrot[:, i, :] * ny[i]
 
         # Write to dataset
         ds['velocity_across'] = ds['velocity_across'] * 0 + across_vel
 
-
-        transp_across = ds.velocity_across.values * ds.area_weight.values[np.newaxis,:,:]
+        transp_across = ds.velocity_across.values * ds.area_weight.values[np.newaxis, :, :]
 
         ds['transport_across'] = ds['transport_across'] * 0 + transp_across
 
     return ds
 
 
-
 def save_as_dataset(ds,
-savepath_transport_data, filename_transport_data
-):
+                    savepath_transport_data, filename_transport_data
+                    ):
 
     if savepath_transport_data:
         filename = join(savepath_transport_data, filename_transport_data)
@@ -936,23 +907,20 @@ savepath_transport_data, filename_transport_data
     return ds
 
 
-
-
 def across_section_transport(year_start,
-year_end,
-section,
-path_mesh,
-path_data,
-savepath_regional_data=None,
-savepath_transport_data=None,
-save_regional_output=False,
-save_transport_output=True,
-filename_regional_data=None,
-filename_transport_data=None,
-use_great_circle=True,
-abg=[50,15,-90]
-):
-
+                             year_end,
+                             section,
+                             path_mesh,
+                             path_data,
+                             savepath_regional_data=None,
+                             savepath_transport_data=None,
+                             save_regional_output=False,
+                             save_transport_output=True,
+                             filename_regional_data=None,
+                             filename_transport_data=None,
+                             use_great_circle=True,
+                             abg=[50, 15, -90]
+                             ):
     ''' across_section_transport.py
 
     Computes the across section velocity and transport for a given section of fesom2 output, where the velocities are given IN the gridcell and NOT on nods.
@@ -991,95 +959,92 @@ abg=[50,15,-90]
     '''
 
     time_range, section_start, section_end, across_0E = process_inputs(year_start,
-                                                        year_end,
-                                                        section,
-                                                        savepath_regional_data,
-                                                        savepath_transport_data,
-                                                        save_transport_output,
-                                                        save_regional_output,
-                                                    )
+                                                                       year_end,
+                                                                       section,
+                                                                       savepath_regional_data,
+                                                                       savepath_transport_data,
+                                                                       save_transport_output,
+                                                                       save_regional_output,
+                                                                       )
 
     mesh, data_u, data_v = load_data(path_mesh, path_data, time_range, across_0E)
 
     box, elem_no_nan, no_nan_triangles, data_u_reg, data_v_reg, lon, lat, extent = cut_to_region(
-                                                                                            section_start,
-                                                                                            section_end,
-                                                                                            mesh,
-                                                                                            data_u,
-                                                                                            data_v,
-                                                                                            filename_regional_data,
-                                                                                            savepath_regional_data,
-                                                                                            save_regional_output,
-                                                                                            extent=2.5,
-                                                                                        )
+        section_start,
+        section_end,
+        mesh,
+        data_u,
+        data_v,
+        filename_regional_data,
+        savepath_regional_data,
+        save_regional_output,
+        extent=2.5,
+    )
 
     line_section, polygon_list, lonlat = create_polygons_and_line(elem_no_nan,
                                                                   mesh,
                                                                   section_start,
                                                                   section_end,
                                                                   use_great_circle
-                                                                 )
+                                                                  )
 
     start_point_bool, end_point_bool = start_end_is_land(section_start,
                                                          section_end,
                                                          polygon_list
-                                                        )
+                                                         )
 
     intersect_bool, coords_array, dist_array, depth_array, area_array, u_array, v_array, elem_array, lon_array, lat_array = find_polygon_intersects(
-    polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh, use_great_circle)
+        polygon_list, line_section, elem_no_nan, lon, lat, data_u_reg, data_v_reg, mesh, use_great_circle)
 
     h_sort, central_dist = sort_by_dist_to_section_start(coords_array,
                                                          section_start
-                                                        )
+                                                         )
 
     normed_normal_vec = normal_vector(coords_array,
                                       use_great_circle,
                                       section_start,
                                       section_end
-                                     )
+                                      )
 
     velocity_across, transport_across = compute_transport(u_array,
                                                           v_array,
                                                           normed_normal_vec,
                                                           area_array
-                                                         )
+                                                          )
 
     ds_transport = create_output(
-    transport_across,
-    velocity_across,
-    lon,
-    lat,
-    elem_array,
-    central_dist,
-    h_sort,
-    dist_array,
-    area_array,
-    coords_array,
-    across_0E,
-    normed_normal_vec,
-    u_array,
-    v_array,
+        transport_across,
+        velocity_across,
+        lon,
+        lat,
+        elem_array,
+        central_dist,
+        h_sort,
+        dist_array,
+        area_array,
+        coords_array,
+        across_0E,
+        normed_normal_vec,
+        u_array,
+        v_array,
     )
 
     ds_transport = rotate_velocity_vec(ds_transport,
-    abg=abg
-    )
+                                       abg=abg
+                                       )
 
     if savepath_transport_data:
         save_as_dataset(ds_transport,
-        savepath_transport_data,
-        filename_transport_data
-        )
-
+                        savepath_transport_data,
+                        filename_transport_data
+                        )
 
     return ds_transport, mesh
 
 
+# Water Propery Masks
 
-
-################################################################## Water Propery Masks
-
-def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(34.5,40), return_temp_and_sal_sections=True):
+def water_property_mask(ds_transport, data_path, temp_range=(6, 15), salt_range=(34.5, 40), return_temp_and_sal_sections=True):
     '''
     water_property_mask.py
 
@@ -1116,8 +1081,8 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
     files_temp = files_salt = list()
     for ii in np.arange(int(year_start), int(year_end) + 1):
         # Create file string for loading
-        files_temp.append(data_path + 'temp.fesom.' + str(ii) +'.nc')
-        files_salt.append(data_path + 'salt.fesom.' + str(ii) +'.nc')
+        files_temp.append(data_path + 'temp.fesom.' + str(ii) + '.nc')
+        files_salt.append(data_path + 'salt.fesom.' + str(ii) + '.nc')
 
     # Load temperature and salinity data
     print('---> Loading and processing temperature/ salinity fields\n')
@@ -1125,8 +1090,8 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
     ds_salt = xr.open_mfdataset(files_salt, combine='by_coords', chunks={'nod2': 1e5})
 
     # Cut to section from ds
-    ds_temp = ds_temp.temp[:,ds_transport.elem_array,:]
-    ds_salt = ds_salt.salt[:,ds_transport.elem_array,:]
+    ds_temp = ds_temp.temp[:, ds_transport.elem_array, :]
+    ds_salt = ds_salt.salt[:, ds_transport.elem_array, :]
 
     # Average nods of grid cell to one value and execute
     ds_temp = ds_temp.mean(dim='tri').load()
@@ -1141,10 +1106,10 @@ def water_property_mask(ds_transport, data_path, temp_range=(6,15), salt_range=(
 
     mask = np.where((temp_mask == True) & (salt_mask == True), True, False)
 
-    ds_transport['mask'] = (('time','central_dist','depth'), mask)
-    ds_transport['temp_mask'] = (('time','central_dist','depth'), temp_mask)
-    ds_transport['salt_mask'] = (('time','central_dist','depth'), salt_mask)
-    ds_transport['temp'] = (('time','central_dist','depth'), temp)
-    ds_transport['salt'] = (('time','central_dist','depth'), salt)
+    ds_transport['mask'] = (('time', 'central_dist', 'depth'), mask)
+    ds_transport['temp_mask'] = (('time', 'central_dist', 'depth'), temp_mask)
+    ds_transport['salt_mask'] = (('time', 'central_dist', 'depth'), salt_mask)
+    ds_transport['temp'] = (('time', 'central_dist', 'depth'), temp)
+    ds_transport['salt'] = (('time', 'central_dist', 'depth'), salt)
 
     return ds_transport

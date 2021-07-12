@@ -37,15 +37,20 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
     if not isinstance(section, list) | isinstance(section, str):
         raise ValueError(
             'The section must be a list of form [lon_start, lon_end, lat_start, lat_end] or a string for a preset section ("FS", "BSO", "BSX", ...)')
+
     if isinstance(section, list) & (len(section) != 4):
         raise ValueError(
             'The section must be a list of form [lon_start, lon_end, lat_start, lat_end]')
+
     if not isinstance(mesh_path, str):
         raise ValueError('mesh path must be a string')
+
     if not isinstance(data_path, str):
         raise ValueError('data path must be a string')
+
     if (mesh_diag_path != None) & (not isinstance(mesh_diag_path, str)):
         raise ValueError('mesh diag path must be a string')
+
     if (how != 'ori') & (how != 'mean'):
         raise ValueError(
             'how must be either ori for all timesteps or mean for the time mwan velocity')
@@ -58,10 +63,13 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
     file_check = []
     for file in files:
         file_check.append(isfile(file))
+
     if not all(file_check):
         raise FileExistsError('One or more of the velocity files do not exist!')
+
     if not isdir(mesh_path):
         raise FileExistsError('The mesh folder does not exist!')
+
     if mesh_diag_path == None:
         mesh_diag_path = data_path + 'fesom.mesh.diag.nc'
         if not isfile(mesh_diag_path):
@@ -123,6 +131,7 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
         section['great_circle'] = True
     else:
         section['great_circle'] = False
+        warnings.warn('Not using a great circle might yield non-accurate results especially for zonal sections in high latitudes as the distances of the single segments are computed on a great circle.')
 
     return mesh, mesh_diag, files, section
 

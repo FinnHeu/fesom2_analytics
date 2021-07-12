@@ -5,5 +5,5 @@
 
 from .plotting import *
 from .transport import *
-from .transports_v2 import *
+from .transports_v2 import cross_section_transports
 from .heat_content import *

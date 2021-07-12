@@ -133,6 +133,9 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
         section['great_circle'] = False
         warnings.warn('Not using a great circle might yield non-accurate results especially for zonal sections in high latitudes as the distances of the single segments are computed on a great circle.')
 
+    # add year information
+    section['years'] = years
+
     return mesh, mesh_diag, files, section
 
 

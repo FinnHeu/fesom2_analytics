@@ -626,10 +626,69 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
     # SORTBY DISTANCE
     ds = ds.sortby('distances_to_start')
 
+    return
+
+
+def _AddTempSalt(section, ds, data_path, mesh_path):
+    '''
+    _AddTempSalt.py
+
+    Adds temperature and salinity values to the section. The temperature and salinity is converted from nods to elements by taking the average
+    of the three nods that form the element.
+
+    Inputs
+    ------
+    section
+
+    ds
+
+    data_path
+
+
+    '''
+
+    # Check for existance of the files
+    years = section['years']
+    files_temp = [data_path + 'temp.fesom.' + str(year) + '.nc' for year in years]
+    files_salt = [data_path + 'salt.fesom.' + str(year) + '.nc' for year in years]
+    files = files_temp + files_salt
+
+    file_check = []
+    for file in files:
+        file_check.append(isfile(file))
+
+    if not all(file_check):
+        raise FileExistsError('One or more of the temperature/ salinity files do not exist!')
+
+    # Open files
+    ds_ts = xr.open_mfdataset(files, combine='by_coords', chunks={'nod2': 1e4})
+
+    # Only load the nods that belong to elements that are part of the section
+    # Flatten the triplets first
+    ds_ts = ds_ts.isel(nod2=ds.elem_nods.values.flatten()).load()
+
+    # Reshape to triplets again and average all three values to obtain an estimate of the elements properties
+    temp = ds_ts.temp.values.reshape(60, len(ds.elem_nods), 3, 45).mean(axis=2)
+    salt = ds_ts.salt.values.reshape(60, len(ds.elem_nods), 3, 45).mean(axis=2)
+
+    # Add to dataset
+    ds['temp'] = (('time', 'elem', 'nz1'), temp)
+    ds['salt'] = (('time', 'elem', 'nz1'), salt)
+
     return ds
 
 
-def cross_section_transports(section, mesh_path, data_path, mesh_diag_path, years, use_great_circle=True, how='mean', add_extent=1, abg=[50, 15, -90]):
+def cross_section_transports(section,
+                             mesh_path,
+                             data_path,
+                             mesh_diag_path,
+                             years,
+                             use_great_circle=True,
+                             how='mean',
+                             add_extent=1,
+                             abg=[50, 15, -90],
+                             add_TS=False
+                             ):
     '''
     cross_section_transports.py
 
@@ -656,6 +715,8 @@ def cross_section_transports(section, mesh_path, data_path, mesh_diag_path, year
         this will impove the speed of the function (default = 1°)
     abg (list)
         rotation of the velocity data (default=[50,15,-90])
+    add_TS (bool)
+        add temperature and salinity to the section (default=False)
 
     Returns
     -------
@@ -687,5 +748,8 @@ def cross_section_transports(section, mesh_path, data_path, mesh_diag_path, year
 
     ds = _ComputeTransports(ds, mesh, section, cell_intersections,
                             section_waypoints, use_great_circle, rotation_flag_lon, lon_rotation)
+
+    if add_TS:
+        ds = _AddTempSalt(section, ds, data_path, mesh_path)
 
     return ds, section

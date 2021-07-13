@@ -626,7 +626,7 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
     # SORTBY DISTANCE
     ds = ds.sortby('distances_to_start')
 
-    return
+    return ds
 
 
 def _AddTempSalt(section, ds, data_path, mesh_path):

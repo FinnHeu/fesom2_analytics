@@ -107,6 +107,13 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
                            'lat_end': 74.5,
                            }
 
+            elif section_name == 'BSX':
+                section = {'lon_start': 64,
+                           'lon_end': 64,
+                           'lat_start': 76,
+                           'lat_end': 81,
+                           }
+
             elif section_name == 'FRAMSTRAIT':
                 section = {'lon_start': -6,
                            'lon_end': 10,

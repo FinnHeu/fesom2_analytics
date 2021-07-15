@@ -121,6 +121,13 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
                            'lat_end': 78.8,
                            }
 
+            elif section_name == 'BEAR_SVAL':
+                section = {'lon_start': 19.999,
+                           'lon_end': 19.999,
+                           'lat_start': 74.5,
+                           'lat_end': 78,
+                           }
+
             # add more presets here
 
         section['name'] = section_name

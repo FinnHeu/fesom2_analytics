@@ -446,8 +446,7 @@ def _CreateVerticalGrid(intersection_coords, section, mesh):
     distances_to_start = np.array(distances_to_start) * 1000  # scale to m
 
     layer_thickness = abs(np.diff(mesh.zlev))  # vertical layer thickness
-    grid_cell_area = distances_between[:, np.newaxis] * \
-        layer_thickness[np.newaxis, :]  # area of the intersected elements
+    grid_cell_area = distances_between[:, np.newaxis] * layer_thickness[np.newaxis, :]  # area of the intersected elements
 
     return distances_between, distances_to_start, layer_thickness, grid_cell_area
 

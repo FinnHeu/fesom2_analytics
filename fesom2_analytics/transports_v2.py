@@ -394,7 +394,7 @@ def _LinePolygonIntersections(mesh, section_waypoints, elem_box_nods, elem_box_i
     return elem_box_nods, elem_box_indices, cell_intersections, intersection_coords
 
 
-def _CreateVerticalGrid(intersection_coords, section, mesh):
+def _CreateVerticalGrid(cell_intersections, section, mesh):
     '''
     vertical_grid.py
 
@@ -424,21 +424,37 @@ def _CreateVerticalGrid(intersection_coords, section, mesh):
     distances_between = []
     distances_to_start = []
 
-    for intersection in intersection_coords:
-        distances_between.append(_Haversine(list(intersection[0])[0],
-                                            list(intersection[0])[-1],
-                                            list(intersection[-1])[0],
-                                            list(intersection[-1])[-1]
+#    for intersection in intersection_coords:
+#        distances_between.append(_Haversine(list(intersection[0])[0],
+#                                            list(intersection[0])[-1],
+#                                            list(intersection[-1])[0],
+#                                            list(intersection[-1])[-1]
+#                                            )
+#                                 )
+#
+#        # compute the distance of the center of the intersection of each element to the section start
+#        distances_to_start.append(_Haversine(section['lon_start'],
+#                                             section['lat_start'],
+#                                             (list(intersection[0])[0] +
+#                                              list(intersection[-1])[0]) / 2,
+#                                             (list(intersection[0])[-1] +
+#                                              list(intersection[-1])[-1]) / 2,
+#                                             )
+#                                  )
+    for ii in range(len(cell_intersections)):
+        distances_between.append(_Haversine(cell_intersections[ii][0][0],  # lon1
+                                            cell_intersections[ii][0][1],   # lat1
+                                            cell_intersections[ii][1][0],   # lon2
+                                            cell_intersections[ii][1][1]    # lat2
                                             )
                                  )
 
-        # compute the distance of the center of the intersection of each element to the section start
         distances_to_start.append(_Haversine(section['lon_start'],
                                              section['lat_start'],
-                                             (list(intersection[0])[0] +
-                                              list(intersection[-1])[0]) / 2,
-                                             (list(intersection[0])[-1] +
-                                              list(intersection[-1])[-1]) / 2,
+                                             (cell_intersections[ii][0][0] +
+                                              cell_intersections[ii][1][0]) / 2,
+                                             (cell_intersections[ii][0][1] +
+                                              cell_intersections[ii][1][1]) / 2,
                                              )
                                   )
 
@@ -446,7 +462,8 @@ def _CreateVerticalGrid(intersection_coords, section, mesh):
     distances_to_start = np.array(distances_to_start) * 1000  # scale to m
 
     layer_thickness = abs(np.diff(mesh.zlev))  # vertical layer thickness
-    grid_cell_area = distances_between[:, np.newaxis] * layer_thickness[np.newaxis, :]  # area of the intersected elements
+    grid_cell_area = distances_between[:, np.newaxis] * \
+        layer_thickness[np.newaxis, :]  # area of the intersected elements
 
     return distances_between, distances_to_start, layer_thickness, grid_cell_area
 

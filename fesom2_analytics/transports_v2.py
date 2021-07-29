@@ -402,8 +402,8 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
 
     Inputs
     ------
-    intersection_coords (list)
-        list of the intersection coordinates in shapely.coordinates format
+    cell_intersections (list)
+        list of the edge intersection coordinates of each element in shapely.coordinates format
     section (dict)
         section dictionary
     mesh (fesom.mesh onject)
@@ -518,12 +518,12 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
     # horizontal_distance
     ds['horizontal_distance'] = (('elem'), distances_between)
     ds.horizontal_distance.attrs['description'] = 'horizontal distance of the intersection for each element'
-    ds.horizontal_distance.attrs['units'] = 'm/s'
+    ds.horizontal_distance.attrs['units'] = 'm'
 
     # distance_to_start
     ds['distances_to_start'] = (('elem'), distances_to_start)
     ds.distances_to_start.attrs['description'] = 'horizontal distance of the center of the segment to the start of the section'
-    ds.distances_to_start.attrs['units'] = 'm/s'
+    ds.distances_to_start.attrs['units'] = 'm'
 
     # vertical_cell_area
     ds['vertical_cell_area'] = (('elem', 'nz1'), grid_cell_area)
@@ -771,7 +771,7 @@ def cross_section_transports(section,
         mesh, section_waypoints, elem_box_nods, elem_box_indices)
 
     distances_between, distances_to_start, layer_thickness, grid_cell_area = _CreateVerticalGrid(
-        intersection_coords, section, mesh)
+        cell_intersections, section, mesh)
 
     ds = _CreateDataset(files, mesh, elem_box_indices, elem_box_nods,
                         distances_between, distances_to_start, grid_cell_area, how, abg)

@@ -468,7 +468,7 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
     return distances_between, distances_to_start, layer_thickness, grid_cell_area
 
 
-def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg, cell_intersections):
+def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg, cell_intersections, rotation_flag_lon, lon_rotation):
     '''
     create_dataset.py
 
@@ -542,10 +542,18 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
         lat1_cell.append(np.array(cell_intersections)[i][0][1])
         lat2_cell.append(np.array(cell_intersections)[i][1][1])
 
+    # rotate back if nessecary
+    if rotation_flag_lon:
+        lon1_cell = np.array(lon1_cell) - lon_rotation
+        lon2_cell = np.array(lon2_cell) - lon_rotation
+        lat1_cell = np.array(lat1_cell) - lon_rotation
+        lat2_cell = np.array(lat2_cell) - lon_rotation
+
     ds['lon1_cell'] = (('elem'), lon1_cell)
     ds['lon2_cell'] = (('elem'), lon2_cell)
     ds['lat1_cell'] = (('elem'), lat1_cell)
     ds['lat2_cell'] = (('elem'), lat2_cell)
+
     ds.lon1_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'
     ds.lon1_cell.attrs['units'] = 'degree'
     ds.lon2_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'

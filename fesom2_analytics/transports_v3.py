@@ -468,7 +468,7 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
     return distances_between, distances_to_start, layer_thickness, grid_cell_area
 
 
-def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg):
+def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg, cell_intersections):
     '''
     create_dataset.py
 
@@ -529,6 +529,31 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
     ds['vertical_cell_area'] = (('elem', 'nz1'), grid_cell_area)
     ds.vertical_cell_area.attrs['description'] = 'cell area of the single intersected elements'
     ds.vertical_cell_area.attrs['units'] = 'm^2'
+
+    # intersection coordinates of the elements
+    lon1_cell = list()
+    lon2_cell = list()
+    lat1_cell = list()
+    lat2_cell = list()
+
+    for i in range(len(ds.elem)):
+        lon1_cell.append(np.array(cell_intersections)[i][0][0])
+        lon2_cell.append(np.array(cell_intersections)[i][1][0])
+        lat1_cell.append(np.array(cell_intersections)[i][0][1])
+        lat2_cell.append(np.array(cell_intersections)[i][1][1])
+
+    ds['lon1_cell'] = (('elem'), lon1_cell)
+    ds['lon2_cell'] = (('elem'), lon2_cell)
+    ds['lat1_cell'] = (('elem'), lat1_cell)
+    ds['lat2_cell'] = (('elem'), lat2_cell)
+    ds.lon1_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'
+    ds.lon1_cell.attrs['units'] = 'degree'
+    ds.lon2_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'
+    ds.lon2_cell.attrs['units'] = 'degree'
+    ds.lat1_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'
+    ds.lat1_cell.attrs['units'] = 'degree'
+    ds.lat2_cell.attrs['description'] = 'left intersection coordinate of the single intersected elements'
+    ds.lat2_cell.attrs['units'] = 'degree'
 
     # UNROTATE
     lon_elem_center = np.mean(mesh.x2[ds.elem_nods], axis=1)
@@ -774,7 +799,7 @@ def cross_section_transports(section,
         cell_intersections, section, mesh)
 
     ds = _CreateDataset(files, mesh, elem_box_indices, elem_box_nods,
-                        distances_between, distances_to_start, grid_cell_area, how, abg)
+                        distances_between, distances_to_start, grid_cell_area, how, abg, cell_intersections)
 
     ds = _ComputeTransports(ds, mesh, section, cell_intersections,
                             section_waypoints, use_great_circle, rotation_flag_lon, lon_rotation)

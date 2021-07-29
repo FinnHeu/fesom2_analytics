@@ -391,7 +391,7 @@ def _LinePolygonIntersections(mesh, section_waypoints, elem_box_nods, elem_box_i
     elem_box_nods = elem_box_nods[intersection_bool]
     elem_box_indices = elem_box_indices[intersection_bool]
 
-    return elem_box_nods, elem_box_indices, cell_intersections, intersection_coords
+    return elem_box_nods, elem_box_indices, cell_intersections
 
 
 def _CreateVerticalGrid(cell_intersections, section, mesh):
@@ -767,7 +767,7 @@ def cross_section_transports(section,
     elem_box_nods, elem_box_indices = _ReduceMeshElementNumber(
         section_waypoints, mesh, section, add_extent)
 
-    elem_box_nods, elem_box_indices, cell_intersections, intersection_coords = _LinePolygonIntersections(
+    elem_box_nods, elem_box_indices, cell_intersections = _LinePolygonIntersections(
         mesh, section_waypoints, elem_box_nods, elem_box_indices)
 
     distances_between, distances_to_start, layer_thickness, grid_cell_area = _CreateVerticalGrid(

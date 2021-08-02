@@ -197,23 +197,7 @@ def _ComputeWaypoints(section, mesh, use_great_circle):
         # Bring the section coordinates into the disired shape [[],...,[]]
         section_waypoints = [[section_lon[i], section_lat[i]] for i in range(len(section_lat))]
 
-    # avoid crossing 0°E by rotating the mesh
-    rotation_flag_lon = False
-    if section['lon_start'] < 0:
-        rotation_flag_lon = True
-        lon_rotation = section['lon_start']
-
-        mesh.x2 = mesh.x2 + lon_rotation
-        section['lon_start'] = section['lon_start'] + lon_rotation
-        section['lon_end'] = section['lon_end'] + lon_rotation
-
-        for ii in range(len(section_waypoints)):
-            section_waypoints[ii][0] = section_waypoints[ii][0] + lon_rotation
-
-    else:
-        lon_rotation = 0
-
-    return section_waypoints, mesh, section, lon_rotation, rotation_flag_lon
+    return section_waypoints, mesh, section
 
 
 def _Haversine(lon1, lat1, lon2, lat2):
@@ -543,7 +527,7 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
     return ds
 
 
-def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints, use_great_circle, rotation_flag_lon, lon_rotation):
+def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints, use_great_circle):
     '''
     compute_transports.py
 
@@ -563,10 +547,6 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
         list of all the section waypoints
     use_great_circle (bool)
         True or False
-    rotation_flag_lon (bool)
-        True if section crosses 0°E, else False
-    lon_rotation (int, float)
-        how many degrees the mesh got rotated
 
     Returns
     -------
@@ -640,15 +620,6 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
 
     ds.velocity_across.attrs['description'] = 'across section velocity'
     ds.velocity_across.attrs['units'] = 'm/s'
-
-    # UNDO ROTATION
-    if rotation_flag_lon:
-        mesh.x2 = mesh.x2 - lon_rotation
-        section['lon_start'] = section['lon_start'] - lon_rotation
-        section['lon_end'] = section['lon_end'] - lon_rotation
-
-        for ii in range(len(section_waypoints)):
-            section_waypoints[ii][0] = section_waypoints[ii][0] - lon_rotation
 
     # Drop unwanted VARIABLES
     ds = ds.drop(['u_rot', 'v_rot'])
@@ -761,7 +732,7 @@ def cross_section_transports(section,
     mesh, mesh_diag, files, section = _ProcessInputs(
         section, mesh_path, data_path, mesh_diag_path, years, how, use_great_circle)
 
-    section_waypoints, mesh, section, lon_rotation, rotation_flag_lon = _ComputeWaypoints(
+    section_waypoints, mesh, section = _ComputeWaypoints(
         section, mesh, use_great_circle)
 
     elem_box_nods, elem_box_indices = _ReduceMeshElementNumber(
@@ -777,7 +748,7 @@ def cross_section_transports(section,
                         distances_between, distances_to_start, grid_cell_area, how, abg)
 
     ds = _ComputeTransports(ds, mesh, section, cell_intersections,
-                            section_waypoints, use_great_circle, rotation_flag_lon, lon_rotation)
+                            section_waypoints, use_great_circle)
 
     if add_TS:
         ds = _AddTempSalt(section, ds, data_path, mesh_path)

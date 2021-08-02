@@ -748,6 +748,6 @@ def cross_section_transports(section,
                             section_waypoints, use_great_circle)
 
     if add_TS:
-        ds = _AddTempSalt(section, ds, data_path, mesh_path)
+        ds = _AddTempSalt(section, ds, data_path, mesh)
 
     return ds, section

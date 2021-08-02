@@ -681,7 +681,7 @@ def cross_section_transports(section,
                              how='mean',
                              add_extent=1,
                              abg=[50, 15, -90],
-                             add_TS=False
+                             add_TS=False,
                              chunks={'elem': 1e4}
 
                              ):

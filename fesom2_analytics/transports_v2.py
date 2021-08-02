@@ -408,23 +408,6 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
     distances_between = []
     distances_to_start = []
 
-#    for intersection in intersection_coords:
-#        distances_between.append(_Haversine(list(intersection[0])[0],
-#                                            list(intersection[0])[-1],
-#                                            list(intersection[-1])[0],
-#                                            list(intersection[-1])[-1]
-#                                            )
-#                                 )
-#
-#        # compute the distance of the center of the intersection of each element to the section start
-#        distances_to_start.append(_Haversine(section['lon_start'],
-#                                             section['lat_start'],
-#                                             (list(intersection[0])[0] +
-#                                              list(intersection[-1])[0]) / 2,
-#                                             (list(intersection[0])[-1] +
-#                                              list(intersection[-1])[-1]) / 2,
-#                                             )
-#                                  )
     for ii in range(len(cell_intersections)):
         distances_between.append(_Haversine(cell_intersections[ii][0][0],  # lon1
                                             cell_intersections[ii][0][1],   # lat1
@@ -452,7 +435,7 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
     return distances_between, distances_to_start, layer_thickness, grid_cell_area
 
 
-def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg):
+def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_between, distances_to_start, grid_cell_area, how, abg, chunks):
     '''
     create_dataset.py
 
@@ -462,12 +445,22 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
     ------
     files (list)
         list of files to be loaded (u.fesom and v.fesom)
-    elem_box_inices (list)
+    elem_box_indices (list)
         list of indices that belong points towards the elements that belong to the section
-    mesh (fesom.mesh object)
-        fesom mesh object
+    elem_box_nods (list)
+        list of indices of the three nods that form each element
+    distances_between (np.ndarray)
+        list of the horizontal length of the single segments in m
+    distances_to_start (np.ndarray)
+        distance of the segment center to the starting point in m
+    grid_cell_area (np.ndarray)
+        cell weight for the transport calculations in m2
     how (str)
         either 'mean' or 'ori'
+    abg (list)
+        euler angles to rotate the fesom2 velocity output (default, [50, 15, -90])
+    chunks (dict)
+        chunks of the velocity dataset (default {'elem': 1e4})
 
     Returns
     -------
@@ -478,10 +471,10 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
 
     # LOAD THE VELOCITY DATA
     if how == 'ori':
-        ds = xr.open_mfdataset(files, combine='by_coords', chunks={
-                               'elem': 1e3}).isel(elem=elem_box_indices).load()
+        ds = xr.open_mfdataset(files, combine='by_coords', chunks=chunks).isel(
+            elem=elem_box_indices).load()
     elif how == 'mean':
-        ds = xr.open_mfdataset(files, combine='by_coords', chunks={'elem': 1e3}).isel(
+        ds = xr.open_mfdataset(files, combine='by_coords', chunks=chunks).isel(
             elem=elem_box_indices).mean(dim='time').load()
 
     # rename u and v to u_rot, v_rot
@@ -689,6 +682,8 @@ def cross_section_transports(section,
                              add_extent=1,
                              abg=[50, 15, -90],
                              add_TS=False
+                             chunks={'elem': 1e4}
+
                              ):
     '''
     cross_section_transports.py
@@ -718,6 +713,8 @@ def cross_section_transports(section,
         rotation of the velocity data (default=[50,15,-90])
     add_TS (bool)
         add temperature and salinity to the section (default=False)
+    chunks (dict)
+        chunks for parallelising the velocity data (default: chunks={'elem': 1e4})
 
     Returns
     -------
@@ -745,7 +742,7 @@ def cross_section_transports(section,
         cell_intersections, section, mesh)
 
     ds = _CreateDataset(files, mesh, elem_box_indices, elem_box_nods,
-                        distances_between, distances_to_start, grid_cell_area, how, abg)
+                        distances_between, distances_to_start, grid_cell_area, how, abg, chunks)
 
     ds = _ComputeTransports(ds, mesh, section, cell_intersections,
                             section_waypoints, use_great_circle)

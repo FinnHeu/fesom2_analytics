@@ -623,7 +623,7 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
     return ds
 
 
-def _AddTempSalt(section, ds, data_path, mesh_path):
+def _AddTempSalt(section, ds, data_path, mesh):
     '''
     _AddTempSalt.py
 
@@ -662,8 +662,8 @@ def _AddTempSalt(section, ds, data_path, mesh_path):
     ds_ts = ds_ts.isel(nod2=ds.elem_nods.values.flatten()).load()
 
     # Reshape to triplets again and average all three values to obtain an estimate of the elements properties
-    temp = ds_ts.temp.values.reshape(len(ds.time), len(ds.elem_nods), 3, 45).mean(axis=2)
-    salt = ds_ts.salt.values.reshape(len(ds.time), len(ds.elem_nods), 3, 45).mean(axis=2)
+    temp = ds_ts.temp.values.reshape(len(ds.time), len(ds.elem_nods), 3, mesh.nlev - 1).mean(axis=2)
+    salt = ds_ts.salt.values.reshape(len(ds.time), len(ds.elem_nods), 3, mesh.nlev - 1).mean(axis=2)
 
     # Add to dataset
     ds['temp'] = (('time', 'elem', 'nz1'), temp)

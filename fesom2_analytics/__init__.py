@@ -3,8 +3,7 @@
 
 """Top-level package for analysis of fesom2.0"""
 
-from .plotting import *
-from .transport import *
+#from .plotting import *
 from .transports_v2 import cross_section_transports
-from .heat_content import *
+#from .heat_content import *
 from .transport_funcs import *

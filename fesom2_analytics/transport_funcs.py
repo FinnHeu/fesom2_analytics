@@ -19,6 +19,14 @@ def TS_mask(ds, S_min=0, S_max=40, T_min=-4, T_max=20):
     return ds
 
 
-def transport_timeseries(ds):
+def get_timeseries(ds, parameter='transport_across'):
     ''''''
-    return ds.transport_across.sum(dim=['elem', 'nz1'])
+    return ds['transport_across'].sum(dim=['elem', 'nz1'])
+
+
+def heat_transport(ds, cp=4190, rho=1030, T_ref=0):
+    ''''''
+    temp = TS_mask(ds, T_min=T_ref)
+    ds['heat_transport'] = temp.transport_across * temp.temp * rho * cp
+
+    return ds

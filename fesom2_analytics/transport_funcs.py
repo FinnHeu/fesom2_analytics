@@ -21,12 +21,45 @@ def TS_mask(ds, S_min=0, S_max=40, T_min=-4, T_max=20):
 
 def get_timeseries(ds, parameter='transport_across'):
     ''''''
-    return ds['transport_across'].sum(dim=['elem', 'nz1'])
+    return ds[parameter].sum(dim=['elem', 'nz1'])
 
 
-def heat_transport(ds, cp=4190, rho=1030, T_ref=0):
+def heat_transport(ds, t_thresh=0, rho=1035, cp=4190, t_range=(-10, 30), s_range=(0, 40), scale=1e-12, climatology=False):
     ''''''
-    temp = TS_mask(ds, T_min=T_ref)
-    ds['heat_transport'] = temp.transport_across * temp.temp * rho * cp
 
-    return ds
+    # compute in, out and net transport and set all other transports to 0
+    transp_in = ds.transport_across.where((ds.temp > t_thresh) & (ds.velocity_across > 0) & (
+        ds.temp >= t_range[0]) & (ds.temp < t_range[-1]) & (ds.salt >= s_range[0]) & (ds.salt < s_range[-1]), 0)
+    transp_out = ds.transport_across.where((ds.temp > t_thresh) & (ds.velocity_across < 0) & (
+        ds.temp >= t_range[0]) & (ds.temp < t_range[-1]) & (ds.salt >= s_range[0]) & (ds.salt < s_range[-1]), 0)
+    #transp_net = ds.transport_across.where((ds.temp > t_thresh) & (ds.temp >= t_range[0]) & (ds.temp < t_range[-1]) & (ds.salt >= s_range[0]) & (ds.salt < s_range[-1]), 0)
+
+    # extract the temperature field
+    temp = ds.temp
+
+    # make temperature relative to t_thresh
+    if t_thresh > 0:
+        temp = temp - t_thresh
+    elif t_thresh < 0:
+        temp = temp + abs(t_thresh)
+    elif t_thresh == 0:
+        pass
+
+    # compute the heat transport relative to t_thresh J = rho * cp * vol * dT
+    # since transports that do not fullfill the criteria are set to 0 they do not contribute to the sum
+
+    heat_transport_in = rho * cp * transp_in * temp
+    heat_transport_out = rho * cp * transp_out * temp
+    #heat_transport_net = rho * cp * transp_net * temp
+
+    # compute the sum across the section
+    heat_transport_in = heat_transport_in.sum(dim=['elem', 'nz1']) * scale
+    heat_transport_out = heat_transport_out.sum(dim=['elem', 'nz1']) * scale
+    #heat_transport_net = heat_transport_net.sum(dim=['elem','nz1']) * scale
+
+    if climatology:
+        heat_transport_in = heat_transport_in.groupby('time.month').mean()
+        heat_transport_out = heat_transport_out.groupby('time.month').mean()
+        #heat_transport_net = heat_transport_net.groupby('time.month').mean()
+
+    return heat_transport_in, heat_transport_out, heat_transport_in + heat_transport_out

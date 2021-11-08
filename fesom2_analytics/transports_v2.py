@@ -200,30 +200,38 @@ def _ComputeWaypoints(section, mesh, use_great_circle):
     return section_waypoints, mesh, section
 
 
-def _Haversine(lon1, lat1, lon2, lat2):
+def _Haversine(lon1, lat1, lon2, lat2, use_great_circle):
     """
     havesine_np,py
 
     Calculate the great circle distance between two points
     on the earth (specified in decimal degrees)
     https://gist.github.com/susanli2016/57f37514fbc491e287c300616104fe77
+    In case the section is zonal, compute the distance along the latitude.
 
     All args must be of equal length.
 
     """
-    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    if use_great_circle:
+        lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
 
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
 
-    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+        a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
 
-    c = 2 * np.arcsin(np.sqrt(a))
-    km = 6367 * c
+        c = 2 * np.arcsin(np.sqrt(a))
+        km = 6367 * c
+
+    else:
+        lat1, lat2 = map(np.randians, [lat1, lat2])
+        dlon = np.abs(lon2 - lon1)
+        km = 111.321 * np.cos(lat1) * dlon
+
     return km
 
 
-def _ReduceMeshElementNumber(section_waypoints, mesh, section, add_extent):
+def _ReduceMeshElementNumber(section_waypoints, mesh, section, add_extent, use_great_circle):
     '''
     reduce_element_number.py
 
@@ -289,7 +297,8 @@ def _ReduceMeshElementNumber(section_waypoints, mesh, section, add_extent):
             distances = _Haversine(lon_temp,
                                    lat_temp,
                                    section_waypoints_lon,
-                                   section_waypoints_lat
+                                   section_waypoints_lat,
+                                   False
                                    )
 
             if any(distances <= min_dist):
@@ -378,7 +387,7 @@ def _LinePolygonIntersections(mesh, section_waypoints, elem_box_nods, elem_box_i
     return elem_box_nods, elem_box_indices, cell_intersections
 
 
-def _CreateVerticalGrid(cell_intersections, section, mesh):
+def _CreateVerticalGrid(cell_intersections, section, mesh, use_great_circle):
     '''
     vertical_grid.py
 
@@ -412,7 +421,8 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
         distances_between.append(_Haversine(cell_intersections[ii][0][0],  # lon1
                                             cell_intersections[ii][0][1],   # lat1
                                             cell_intersections[ii][1][0],   # lon2
-                                            cell_intersections[ii][1][1]    # lat2
+                                            cell_intersections[ii][1][1],  # lat2
+                                            use_great_circle
                                             )
                                  )
 
@@ -422,6 +432,7 @@ def _CreateVerticalGrid(cell_intersections, section, mesh):
                                               cell_intersections[ii][1][0]) / 2,
                                              (cell_intersections[ii][0][1] +
                                               cell_intersections[ii][1][1]) / 2,
+                                              use_great_circle
                                              )
                                   )
 
@@ -733,7 +744,7 @@ def cross_section_transports(section,
         section, mesh, use_great_circle)
 
     elem_box_nods, elem_box_indices = _ReduceMeshElementNumber(
-        section_waypoints, mesh, section, add_extent)
+        section_waypoints, mesh, section, add_extent, use_great_circle)
 
     elem_box_nods, elem_box_indices, cell_intersections = _LinePolygonIntersections(
         mesh, section_waypoints, elem_box_nods, elem_box_indices)

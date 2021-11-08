@@ -224,7 +224,7 @@ def _Haversine(lon1, lat1, lon2, lat2, use_great_circle):
         km = 6367 * c
 
     else:
-        lat1, lat2 = map(np.randians, [lat1, lat2])
+        lat1, lat2 = map(np.radians, [lat1, lat2])
         dlon = np.abs(lon2 - lon1)
         km = 111.321 * np.cos(lat1) * dlon
 

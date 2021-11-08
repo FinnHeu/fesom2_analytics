@@ -750,7 +750,7 @@ def cross_section_transports(section,
         mesh, section_waypoints, elem_box_nods, elem_box_indices)
 
     distances_between, distances_to_start, layer_thickness, grid_cell_area = _CreateVerticalGrid(
-        cell_intersections, section, mesh)
+        cell_intersections, section, mesh, use_great_circle)
 
     ds = _CreateDataset(files, mesh, elem_box_indices, elem_box_nods,
                         distances_between, distances_to_start, grid_cell_area, how, abg, chunks)

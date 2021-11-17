@@ -691,7 +691,7 @@ def _AddTempSalt(section, ds, data_path, mesh):
 
 
 
-def _AddIceTransport(section, ds, data_path, mesh):
+def _AddIceTransport(section, ds, data_path, mesh, abg):
 
     '''
     _AddIceTransport.py
@@ -848,6 +848,6 @@ def cross_section_transports(section,
         ds = _AddTempSalt(section, ds, data_path, mesh)
 
     if add_IT:
-        ds = _AddIceTransport(section, ds, data_path, mesh)
+        ds = _AddIceTransport(section, ds, data_path, mesh, abg)
 
     return ds, section

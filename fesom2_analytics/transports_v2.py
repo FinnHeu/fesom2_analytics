@@ -139,13 +139,15 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
         section['orientation'] = 'zonal'
     else:
         section['orientation'] = 'other'
+        warnings.warn('The transport computation for non zonal or meridional sections is experimental and no warranty for its correctness is given!')
 
     # Add great circle information
     if use_great_circle:
         section['great_circle'] = True
     else:
         section['great_circle'] = False
-        warnings.warn('Not using a great circle might yield non-accurate results especially for zonal sections in high latitudes as the distances of the single segments are computed on a great circle.')
+        warnings.warn('For zonal sections the length of the non-great-circle section is computed with a reference length of 111.568 km/°E * cos(lat)')
+
 
     # add year information
     section['years'] = years
@@ -649,6 +651,11 @@ def _AddTempSalt(section, ds, data_path, mesh):
 
     data_path
 
+    Returns
+    -------
+
+    ds
+
 
     '''
 
@@ -679,6 +686,82 @@ def _AddTempSalt(section, ds, data_path, mesh):
     # Add to dataset
     ds['temp'] = (('time', 'elem', 'nz1'), temp)
     ds['salt'] = (('time', 'elem', 'nz1'), salt)
+
+    return ds
+
+
+
+def _AddIceTransport(section, ds, data_path, mesh):
+
+    '''
+    _AddIceTransport.py
+
+    Adds the ice volume transport across the section by averaging the 3 nods of the intersected elements
+
+    Inputs
+    ------
+    section
+
+    ds
+
+    data_path
+
+    Returns
+    -------
+
+    ds
+    '''
+
+    # Check for existance of the files
+    years = section['years']
+    files_uice = [data_path + 'uice.fesom.' + str(year) + '.nc' for year in years]
+    files_vice = [data_path + 'vice.fesom.' + str(year) + '.nc' for year in years]
+    files_mice = [data_path + 'm_ice.fesom.' + str(year) + '.nc' for year in years]
+
+    files = files_uice + files_vice + files_mice
+
+    file_check = []
+    for file in files:
+        file_check.append(isfile(file))
+
+    if not all(file_check):
+        raise FileExistsError('One or more of the ice velocity files do not exist!')
+
+    # Open files
+    ds_ice = xr.open_mfdataset(files, combine='by_coords')
+
+    # Only load the nods that belong to elements that are part of the section
+    # Flatten the triplets first
+    ds_ice_section = ds_ice.isel(nod2=ds.elem_nods.values.flatten())
+
+    # Reshape to triplets again
+    m_ice_nods = ds_ice_section.m_ice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
+    u_ice_nods = ds_ice_section.uice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
+    v_ice_nods = ds_ice_section.vice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
+
+    # Rotate the velocity vectors
+    lon_elem_center = np.mean(mesh.x2[ds.elem_nods], axis=1)
+    lat_elem_center = np.mean(mesh.y2[ds.elem_nods], axis=1)
+
+    u_ice_nods, v_ice_nods = pf.vec_rotate_r2g(abg[0], abg[1], abg[2], lon_elem_center[np.newaxis, :, np.newaxis],
+                                               lat_elem_center[np.newaxis, :, np.newaxis], u_ice_nods, v_ice_nods, flag=1)
+
+    # Write the triplets to the dataset
+    ds['m_ice_nods'] = (('time','elem','tri'), m_ice_nods)
+    ds['u_ice_nods'] = (('time','elem','tri'), u_ice_nods)
+    ds['v_ice_nods'] = (('time','elem','tri'), v_ice_nods)
+
+    # Average the triplets and write to dataset
+    ds['m_ice'] = ds.m_ice_nods.mean(dim='tri')
+    ds['u_ice'] = ds.u_ice_nods.mean(dim='tri')
+    ds['v_ice'] = ds.v_ice_nods.mean(dim='tri')
+
+    # Compute the across section ice transport in m^3/s
+    if section['orientation'] == 'zonal':
+        ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.v_ice
+
+    elif section['orientation'] == 'meridional':
+        ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.u_ice
 
     return ds
 
@@ -760,5 +843,8 @@ def cross_section_transports(section,
 
     if add_TS:
         ds = _AddTempSalt(section, ds, data_path, mesh)
+
+    if add_IT:
+        ds = _AddIceTransport(section, ds, data_path, mesh)
 
     return ds, section

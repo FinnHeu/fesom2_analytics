@@ -776,6 +776,7 @@ def cross_section_transports(section,
                              add_extent=1,
                              abg=[50, 15, -90],
                              add_TS=False,
+                             add_IT=False,
                              chunks={'elem': 1e4}
 
                              ):
@@ -807,6 +808,8 @@ def cross_section_transports(section,
         rotation of the velocity data (default=[50,15,-90])
     add_TS (bool)
         add temperature and salinity to the section (default=False)
+    add_IT (bool)
+        add ice transport to the section (default=False)
     chunks (dict)
         chunks for parallelising the velocity data (default: chunks={'elem': 1e4})
 

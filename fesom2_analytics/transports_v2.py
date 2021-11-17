@@ -735,9 +735,9 @@ def _AddIceTransport(section, ds, data_path, mesh):
     ds_ice_section = ds_ice.isel(nod2=ds.elem_nods.values.flatten())
 
     # Reshape to triplets again
-    m_ice_nods = ds_ice_section.m_ice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
-    u_ice_nods = ds_ice_section.uice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
-    v_ice_nods = ds_ice_section.vice.values.reshape((len(ds_ice_section.time), len(ds_transport.elem), 3))
+    m_ice_nods = ds_ice_section.m_ice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
+    u_ice_nods = ds_ice_section.uice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
+    v_ice_nods = ds_ice_section.vice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
 
     # Rotate the velocity vectors
     lon_elem_center = np.mean(mesh.x2[ds.elem_nods], axis=1)

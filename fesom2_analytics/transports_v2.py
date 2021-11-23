@@ -139,14 +139,16 @@ def _ProcessInputs(section, mesh_path, data_path, mesh_diag_path, years, how, us
         section['orientation'] = 'zonal'
     else:
         section['orientation'] = 'other'
-        warnings.warn('The transport computation for non zonal or meridional sections is experimental and no warranty for its correctness is given!')
+        warnings.warn('The transport computation for non zonal or non meridional sections is experimental and \
+                       no warranty for its correctness is given!')
 
     # Add great circle information
     if use_great_circle:
         section['great_circle'] = True
     else:
         section['great_circle'] = False
-        warnings.warn('For zonal sections the length of the non-great-circle section is computed with a reference length of 111.568 km/°E * cos(lat)')
+        warnings.warn('For zonal sections the length of the non-great-circle section is computed with a \
+                       reference length of 111.568 km/°E * cos(lat)')
 
 
     # add year information
@@ -503,11 +505,11 @@ def _CreateDataset(files, mesh, elem_box_indices, elem_box_nods, distances_betwe
 
     # elem_nods
     ds['elem_nods'] = (('elem', 'triple'), elem_box_nods)
-    ds.elem_nods.attrs['description'] = 'indices of the nods that represent the elements that belong to the section relative to the global data field'
+    ds.elem_nods.attrs['description'] = 'indices of the 3 nods that represent the elements that belong to the section relative to the global data field'
 
     # horizontal_distance
     ds['horizontal_distance'] = (('elem'), distances_between)
-    ds.horizontal_distance.attrs['description'] = 'horizontal distance of the intersection for each element'
+    ds.horizontal_distance.attrs['description'] = 'width of the intersection for each element'
     ds.horizontal_distance.attrs['units'] = 'm'
 
     # distance_to_start
@@ -537,7 +539,7 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
     '''
     compute_transports.py
 
-    Computes the transports across the section by taking the dot product of the section normal vector and the local velocity
+    Computes the transports across the section by taking the dot product of the section normal vector and the local velocity vector
 
     Inputs
     ------
@@ -621,7 +623,7 @@ def _ComputeTransports(ds, mesh, section, cell_intersections, section_waypoints,
                               ds.vertical_cell_area.values[np.newaxis, :, :])
 
     # add attributes
-    ds.transport_across.attrs['description'] = 'volume transport through the section'
+    ds.transport_across.attrs['description'] = 'volume transport of each single cell through the section'
     ds.transport_across.attrs['units'] = 'm^3/s'
 
     ds.velocity_across.attrs['description'] = 'across section velocity'
@@ -645,16 +647,20 @@ def _AddTempSalt(section, ds, data_path, mesh):
 
     Inputs
     ------
-    section
-
-    ds
-
-    data_path
+    section (dict)
+        section dictionary
+    ds (xarray.Dataset)
+        dataset containing the velocities etc.
+    data_path (str)
+        directory where the fesom output is stored
+    mesh (fesom mesh file)
+        fesom mesh file
 
     Returns
     -------
 
-    ds
+    ds (xr.Dataset)
+        final dataset
 
 
     '''
@@ -696,20 +702,25 @@ def _AddIceTransport(section, ds, data_path, mesh, abg):
     '''
     _AddIceTransport.py
 
-    Adds the ice volume transport across the section by averaging the 3 nods of the intersected elements
+    Adds the ice volume transport across the section by averaging the ice velocity to of 3 nods of the intersected elements.
 
     Inputs
     ------
-    section
-
-    ds
-
-    data_path
+    section (dict)
+        section dictionary
+    ds (xarray.Dataset)
+        dataset containing the velocities etc.
+    data_path (str)
+        directory where the fesom output is stored
+    mesh (fesom mesh file)
+        fesom mesh file
 
     Returns
     -------
 
-    ds
+    ds (xr.Dataset)
+        final dataset
+
     '''
 
     # Check for existance of the files
@@ -727,41 +738,46 @@ def _AddIceTransport(section, ds, data_path, mesh, abg):
     if not all(file_check):
         raise FileExistsError('One or more of the ice velocity files do not exist!')
 
-    # Open files
-    ds_ice = xr.open_mfdataset(files, combine='by_coords')
+    # prohibit the orientation=other case
+    if section['orientation'] == 'other':
+        warnings.warn('Currently the ice transport across non-zonal/ non-meridional sections is not implemented! \
+                        Skipping ice transport computation...')
+    else:
+        # Open files
+        ds_ice = xr.open_mfdataset(files, combine='by_coords')
 
-    # Only load the nods that belong to elements that are part of the section
-    # Flatten the triplets first
-    ds_ice_section = ds_ice.isel(nod2=ds.elem_nods.values.flatten())
+        # Only load the nods that belong to elements that are part of the section
+        # Flatten the triplets first
+        ds_ice_section = ds_ice.isel(nod2=ds.elem_nods.values.flatten())
 
-    # Reshape to triplets again
-    m_ice_nods = ds_ice_section.m_ice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
-    u_ice_nods = ds_ice_section.uice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
-    v_ice_nods = ds_ice_section.vice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
+        # Reshape to triplets again
+        m_ice_nods = ds_ice_section.m_ice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
+        u_ice_nods = ds_ice_section.uice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
+        v_ice_nods = ds_ice_section.vice.values.reshape((len(ds_ice_section.time), len(ds.elem), 3))
 
-    # Rotate the velocity vectors
-    lon_elem_center = np.mean(mesh.x2[ds.elem_nods], axis=1)
-    lat_elem_center = np.mean(mesh.y2[ds.elem_nods], axis=1)
+        # Rotate the velocity vectors
+        lon_elem_center = np.mean(mesh.x2[ds.elem_nods], axis=1)
+        lat_elem_center = np.mean(mesh.y2[ds.elem_nods], axis=1)
 
-    u_ice_nods, v_ice_nods = pf.vec_rotate_r2g(abg[0], abg[1], abg[2], lon_elem_center[np.newaxis, :, np.newaxis],
-                                               lat_elem_center[np.newaxis, :, np.newaxis], u_ice_nods, v_ice_nods, flag=1)
+        u_ice_nods, v_ice_nods = pf.vec_rotate_r2g(abg[0], abg[1], abg[2], lon_elem_center[np.newaxis, :, np.newaxis],
+                                                   lat_elem_center[np.newaxis, :, np.newaxis], u_ice_nods, v_ice_nods, flag=1)
 
-    # Write the triplets to the dataset
-    ds['m_ice_nods'] = (('time','elem','tri'), m_ice_nods)
-    ds['u_ice_nods'] = (('time','elem','tri'), u_ice_nods)
-    ds['v_ice_nods'] = (('time','elem','tri'), v_ice_nods)
+        # Write the triplets to the dataset
+        ds['m_ice_nods'] = (('time','elem','tri'), m_ice_nods)
+        ds['u_ice_nods'] = (('time','elem','tri'), u_ice_nods)
+        ds['v_ice_nods'] = (('time','elem','tri'), v_ice_nods)
 
-    # Average the triplets and write to dataset
-    ds['m_ice'] = ds.m_ice_nods.mean(dim='tri')
-    ds['u_ice'] = ds.u_ice_nods.mean(dim='tri')
-    ds['v_ice'] = ds.v_ice_nods.mean(dim='tri')
+        # Average the triplets and write to dataset
+        ds['m_ice'] = ds.m_ice_nods.mean(dim='tri')
+        ds['u_ice'] = ds.u_ice_nods.mean(dim='tri')
+        ds['v_ice'] = ds.v_ice_nods.mean(dim='tri')
 
-    # Compute the across section ice transport in m^3/s
-    if section['orientation'] == 'zonal':
-        ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.v_ice
+        # Compute the across section ice transport in m^3/s
+        if section['orientation'] == 'zonal':
+            ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.v_ice
 
-    elif section['orientation'] == 'meridional':
-        ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.u_ice
+        elif section['orientation'] == 'meridional':
+            ds['ice_transport_across'] = ds.horizontal_distance * ds.m_ice * ds.u_ice
 
     return ds
 
